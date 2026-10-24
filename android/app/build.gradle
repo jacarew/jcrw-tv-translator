@@ -26,7 +26,7 @@ android {
         applicationId "com.metallic.chiaki.tvfix"
         minSdkVersion 21
         targetSdkVersion 33
-        versionCode 23
+        versionCode 24
         versionName chiakiVersion
     }
     buildFeatures {
