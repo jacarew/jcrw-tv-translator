@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="subtitle_caption_color_names">
+        <item>Beyaz</item><item>Sarı</item><item>Camgöbeği</item><item>Pembe</item><item>Yeşil</item>
+    </string-array>
+    <string-array name="subtitle_caption_text_colors">
+        <item>#FFFFFFFF</item><item>#FFFFFF00</item><item>#FF00FFFF</item><item>#FFFF80AB</item><item>#FF00FF00</item>
+    </string-array>
+    <string-array name="subtitle_caption_background_names">
+        <item>Siyah • %85</item><item>Siyah • %60</item><item>Lacivert • %85</item><item>Saydam</item>
+    </string-array>
+    <string-array name="subtitle_caption_background_colors">
+        <item>#D9000000</item><item>#99000000</item><item>#D9071530</item><item>#00000000</item>
+    </string-array>
+    <string-array name="subtitle_caption_font_names">
+        <item>Sans Serif</item><item>Sans Serif Kalın</item><item>Sans Serif Siyah</item><item>Dar Sans Serif</item><item>Serif</item><item>Serif Kalın</item><item>Monospace</item><item>Çizgi roman havası</item><item>Küçük büyük harf</item>
+    </string-array>
+    <string-array name="subtitle_caption_font_values">
+        <item>sans-serif</item><item>sans-serif-medium</item><item>sans-serif-black</item><item>sans-serif-condensed</item><item>serif</item><item>serif</item><item>monospace</item><item>casual</item><item>sans-serif-smallcaps</item>
+    </string-array>
+</resources>

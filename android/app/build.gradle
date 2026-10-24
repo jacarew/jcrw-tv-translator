@@ -1,0 +1,124 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-parcelize'
+apply plugin: 'kotlin-kapt'
+
+def rootCMakeLists = "../../CMakeLists.txt"
+def rootCMakeListsContent = file(rootCMakeLists).text
+static def grepVersionComponent(content, varname) {
+    def match = content =~ /set\($varname ([0-9]+)\)/
+    if(!match.find())
+        throw new GradleException("Failed to find $varname in CMakeLists.txt")
+    return match.group(1)
+}
+def chiakiVersionMajor = grepVersionComponent(rootCMakeListsContent, "CHIAKI_VERSION_MAJOR")
+def chiakiVersionMinor = grepVersionComponent(rootCMakeListsContent, "CHIAKI_VERSION_MINOR")
+def chiakiVersionPatch = grepVersionComponent(rootCMakeListsContent, "CHIAKI_VERSION_PATCH")
+def chiakiVersion = "$chiakiVersionMajor.$chiakiVersionMinor.$chiakiVersionPatch"
+println("Determined Chiaki Version: $chiakiVersion")
+
+android {
+    namespace "com.metallic.chiaki"
+    compileSdkVersion 34
+    defaultConfig {
+        // Keep the upstream app installed alongside this TV-focused build so
+        // its existing registration and settings remain untouched.
+        applicationId "com.metallic.chiaki.tvfix"
+        minSdkVersion 21
+        targetSdkVersion 33
+        versionCode 22
+        versionName chiakiVersion
+    }
+    buildFeatures {
+        viewBinding true
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+    signingConfigs {
+        release {}
+    }
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+
+    Properties properties = new Properties()
+    def propertiesFile = file("../local.properties")
+    if (propertiesFile.exists()) {
+        properties.load(propertiesFile.newDataInputStream())
+    }
+
+	if(properties.containsKey("chiakiKeystore")) {
+        println("Enabling Local Signing")
+        buildTypes.debug.signingConfig = signingConfigs.release
+        signingConfigs.release.storeFile = file(properties.get("chiakiKeystore"))
+        signingConfigs.release.storePassword = properties.get("chiakiKeystorePW")
+        signingConfigs.release.keyAlias = properties.get("chiakiKeyAlias")
+        signingConfigs.release.keyPassword = properties.get("chiakiKeyPW")
+    } else {
+        println("Signing not enabled")
+    }
+
+    // Public release builds use a separate, ignored key file. This keeps the
+    // developer's TV debug signing key and local app data independent.
+    def releaseSigningPropertiesFile = file("../release-signing.properties")
+    if (releaseSigningPropertiesFile.exists()) {
+        Properties releaseSigningProperties = new Properties()
+        releaseSigningProperties.load(releaseSigningPropertiesFile.newDataInputStream())
+        signingConfigs.release.storeFile = file(releaseSigningProperties.getProperty("storeFile"))
+        signingConfigs.release.storePassword = releaseSigningProperties.getProperty("storePassword")
+        signingConfigs.release.keyAlias = releaseSigningProperties.getProperty("keyAlias")
+        signingConfigs.release.keyPassword = releaseSigningProperties.getProperty("keyPassword")
+        buildTypes.release.signingConfig = signingConfigs.release
+    }
+
+    // Reuse the existing TV build's debug key when supplied so upgrades retain
+    // the installed app's signature and private registration data.
+    def tvDebugKeystore = System.getenv("CHIAKI_DEBUG_KEYSTORE")
+    if (tvDebugKeystore && !properties.containsKey("chiakiKeystore")) {
+        signingConfigs.debug.storeFile = file(tvDebugKeystore)
+        signingConfigs.debug.storePassword = "android"
+        signingConfigs.debug.keyAlias = "androiddebugkey"
+        signingConfigs.debug.keyPassword = "android"
+    }
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+        freeCompilerArgs += "-Xuse-experimental=kotlin.ExperimentalUnsignedTypes"
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'androidx.appcompat:appcompat:1.6.0'
+    implementation 'androidx.core:core-ktx:1.9.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation 'androidx.preference:preference:1.2.0'
+    implementation 'com.google.android.material:material:1.8.0'
+    implementation 'com.google.mlkit:text-recognition:16.0.1'
+    implementation 'cz.adaptech.tesseract4android:tesseract4android:4.9.0'
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1'
+    implementation 'androidx.lifecycle:lifecycle-reactivestreams:2.5.1'
+    implementation "io.reactivex.rxjava2:rxjava:2.2.20"
+    implementation "io.reactivex.rxjava2:rxkotlin:2.4.0"
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
+    def room_version = "2.5.0"
+    implementation "androidx.room:room-runtime:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
+    implementation "androidx.room:room-ktx:$room_version"
+    implementation "androidx.room:room-rxjava2:$room_version"
+    implementation "com.squareup.moshi:moshi:1.15.1"
+    kapt "com.squareup.moshi:moshi-kotlin-codegen:1.15.1"
+}

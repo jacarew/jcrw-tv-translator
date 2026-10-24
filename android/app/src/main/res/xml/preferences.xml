@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        app:key="category_general"
+        app:title="@string/preferences_category_title_general">
+        <ListPreference
+            app:key="ui_language"
+            app:title="@string/ui_language_title"
+            app:summary="@string/ui_language_summary" />
+        <Preference
+            app:key="registered_hosts"
+            tools:summary="@string/preferences_registered_hosts_summary"
+            app:summary=" "
+            app:title="@string/preferences_registered_hosts_title"
+            app:fragment="com.metallic.chiaki.settings.SettingsRegisteredHostsFragment"
+            app:icon="@drawable/ic_console_simple"/>
+
+        <SwitchPreference
+            app:key="@string/preferences_swap_cross_moon_key"
+            app:title="@string/preferences_swap_cross_moon_title"
+            app:summary="@string/preferences_swap_cross_moon_summary"
+            app:icon="@drawable/ic_gamepad" />
+
+        <Preference
+            app:key="controller_button_mapping"
+            app:title="@string/controller_mapping_title"
+            app:summary="@string/controller_mapping_summary"
+            app:icon="@drawable/ic_gamepad" />
+
+        <Preference
+            app:key="logs"
+            app:summary="@string/preferences_logs_summary"
+            app:title="@string/preferences_logs_title"
+            app:fragment="com.metallic.chiaki.settings.SettingsLogsFragment"
+            app:icon="@drawable/ic_log"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory app:key="category_stream" app:title="@string/preferences_category_title_stream">
+        <SwitchPreference app:key="subtitle_translation_enabled" app:title="@string/subtitle_translation_enabled_title" app:summary="@string/subtitle_translation_enabled_summary" app:defaultValue="true" app:icon="@drawable/ic_resolution" />
+        <SwitchPreference app:key="subtitle_controller_shortcuts_enabled" app:title="@string/subtitle_controller_shortcuts_title" app:summary="@string/subtitle_controller_shortcuts_summary" app:defaultValue="true" app:icon="@drawable/ic_gamepad" />
+		<SwitchPreference app:key="stream_hints_enabled" app:title="@string/stream_hints_title" app:summary="@string/stream_hints_summary" app:defaultValue="true" app:icon="@drawable/ic_gamepad" />
+        <Preference app:key="subtitle_translation_prepare" app:title="@string/subtitle_translation_prepare_title" app:summary="@string/subtitle_translation_prepare_summary" app:icon="@drawable/ic_resolution" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:key="category_subtitle_translation" app:title="@string/subtitle_settings_translation_category">
+        <ListPreference app:key="subtitle_translation_provider" app:title="@string/subtitle_translation_provider_title" app:summary="@string/subtitle_translation_provider_summary" />
+        <ListPreference app:key="subtitle_ocr_engine" app:title="@string/subtitle_ocr_engine_title" app:summary="@string/subtitle_ocr_engine_summary" />
+        <ListPreference app:key="subtitle_ocr_max_width" app:title="@string/subtitle_ocr_resolution_title" app:summary="@string/subtitle_ocr_resolution_summary" />
+        <ListPreference app:key="subtitle_source_language" app:title="@string/subtitle_source_language_title" app:summary="@string/subtitle_source_language_summary" />
+        <ListPreference app:key="subtitle_target_language" app:title="@string/subtitle_target_language_title" app:summary="@string/subtitle_target_language_summary" />
+        <EditTextPreference app:key="subtitle_translation_api_key" app:title="@string/subtitle_translation_api_key_title" app:summary="@string/subtitle_translation_api_key_summary" app:dialogTitle="@string/subtitle_translation_api_key_title" />
+        <EditTextPreference app:key="subtitle_translation_endpoint" app:title="@string/subtitle_translation_endpoint_title" app:summary="@string/subtitle_translation_endpoint_summary" app:dialogTitle="@string/subtitle_translation_endpoint_title" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:key="category_subtitle_appearance" app:title="@string/subtitle_settings_appearance_category">
+        <SwitchPreference app:key="subtitle_caption_visible" app:title="@string/subtitle_caption_visible_title" app:summary="@string/subtitle_caption_visible_summary" app:defaultValue="true" />
+        <SeekBarPreference app:key="subtitle_caption_size" app:title="@string/subtitle_caption_size_title" app:summary="@string/subtitle_caption_size_summary" app:min="8" android:max="48" app:defaultValue="25" app:showSeekBarValue="true" />
+        <ListPreference app:key="subtitle_caption_text_color" app:title="@string/subtitle_caption_text_color_title" app:entries="@array/subtitle_caption_color_names" app:entryValues="@array/subtitle_caption_text_colors" app:defaultValue="#FFFFFFFF" />
+        <ListPreference app:key="subtitle_caption_background_color" app:title="@string/subtitle_caption_background_color_title" app:entries="@array/subtitle_caption_background_names" app:entryValues="@array/subtitle_caption_background_colors" app:defaultValue="#D9000000" />
+        <ListPreference app:key="subtitle_caption_font" app:title="@string/subtitle_caption_font_title" app:entries="@array/subtitle_caption_font_names" app:entryValues="@array/subtitle_caption_font_values" app:defaultValue="sans-serif-medium" />
+        <SeekBarPreference app:key="subtitle_caption_x" app:title="@string/subtitle_caption_x_title" app:summary="@string/subtitle_caption_x_summary" app:min="0" android:max="100" app:defaultValue="50" app:showSeekBarValue="true" />
+        <SeekBarPreference app:key="subtitle_caption_y" app:title="@string/subtitle_caption_y_title" app:summary="@string/subtitle_caption_y_summary" app:min="0" android:max="100" app:defaultValue="8" app:showSeekBarValue="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:key="category_subtitle_voice" app:title="@string/subtitle_settings_voice_category">
+        <SwitchPreference app:key="subtitle_voiceover_enabled" app:title="@string/subtitle_voiceover_title" app:summary="@string/subtitle_voiceover_summary" app:defaultValue="false" app:icon="@drawable/ic_resolution" />
+        <ListPreference app:key="subtitle_voiceover_game" app:title="@string/subtitle_voice_game_title" app:summary="@string/subtitle_voice_game_summary" />
+        <Preference app:key="subtitle_voice_character_scan" app:title="@string/subtitle_voice_scan_title" app:summary="@string/subtitle_voice_scan_summary" />
+        <ListPreference app:key="subtitle_voiceover_provider" app:title="@string/subtitle_speech_provider_title" app:summary="@string/subtitle_speech_provider_summary" />
+        <Preference app:key="subtitle_edge_tts_setup" app:title="@string/subtitle_edge_tts_setup_title" app:summary="@string/subtitle_edge_tts_setup_summary" />
+        <ListPreference app:key="subtitle_voiceover_mode" app:title="@string/subtitle_voice_mode_title" app:summary="@string/subtitle_voice_mode_summary" />
+        <ListPreference app:key="subtitle_voiceover_gender" app:title="@string/subtitle_voice_gender_title" app:summary="@string/subtitle_voice_gender_summary" />
+        <ListPreference app:key="subtitle_voiceover_voice" app:title="@string/subtitle_voice_choice_title" app:summary="@string/subtitle_voice_choice_summary" />
+        <EditTextPreference app:key="subtitle_gemini_tts_api_key" app:title="@string/subtitle_gemini_tts_key_title" app:summary="@string/subtitle_gemini_tts_key_summary" app:dialogTitle="@string/subtitle_gemini_tts_key_title" />
+        <ListPreference app:key="subtitle_gemini_tts_female_voice" app:title="@string/subtitle_gemini_female_voice_title" app:summary="@string/subtitle_gemini_character_voice_summary" />
+        <ListPreference app:key="subtitle_gemini_tts_male_voice" app:title="@string/subtitle_gemini_male_voice_title" app:summary="@string/subtitle_gemini_character_voice_summary" />
+        <SeekBarPreference app:key="subtitle_voiceover_volume" app:title="@string/subtitle_voice_volume_title" app:summary="@string/subtitle_voice_volume_summary" app:min="0" android:max="100" app:showSeekBarValue="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:key="category_stream_quality" app:title="@string/preferences_category_title_stream_quality">
+        <ListPreference app:key="@string/preferences_resolution_key" app:title="@string/preferences_resolution_title" app:summary="%s" app:icon="@drawable/ic_resolution" />
+        <ListPreference app:key="@string/preferences_fps_key" app:title="@string/preferences_fps_title" app:summary="%s" app:icon="@drawable/ic_fps" />
+        <EditTextPreference app:key="@string/preferences_bitrate_key" app:title="@string/preferences_bitrate_title" app:icon="@drawable/ic_bitrate" />
+        <ListPreference app:key="@string/preferences_codec_key" app:title="@string/preferences_codec_title" app:summary="%s" app:icon="@drawable/ic_codec" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:key="category_help"
+        app:title="@string/preferences_category_title_help">
+        <Preference
+            app:key="help_and_legal"
+            app:title="@string/help_and_legal_title"
+            app:summary="@string/help_and_legal_summary"
+            app:icon="@drawable/ic_log" />
+		<Preference
+			app:key="setup_tutorial"
+			app:title="@string/setup_tutorial_title"
+			app:summary="@string/setup_tutorial_summary"
+			app:icon="@drawable/ic_log" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:key="category_export"
+        app:title="@string/preferences_category_title_export">
+        <Preference
+            app:key="@string/preferences_export_settings_key"
+            app:summary="@string/preferences_export_settings_summary"
+            app:title="@string/preferences_export_settings_title"
+            app:icon="@drawable/ic_export"/>
+
+        <Preference
+            app:key="@string/preferences_import_settings_key"
+            app:summary="@string/preferences_import_settings_summary"
+            app:title="@string/preferences_import_settings_title"
+            app:icon="@drawable/ic_import"/>
+    </PreferenceCategory>
+</PreferenceScreen>
