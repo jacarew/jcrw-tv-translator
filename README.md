@@ -5,7 +5,14 @@
 
 Jcrw is a free, independent Android TV application based on the open-source Chiaki Remote Play client. It streams a PlayStation console to Android TV and can OCR, translate, display, and optionally read subtitles aloud. Jcrw is not made, endorsed, or supported by Sony or PlayStation.
 
-This repository contains two separate Android TV apps: the Chiaki-based streaming app in `android/` and the screen-capture subtitle companion in `translator/`. Each has its own package and release APK. The companion can only translate content visible to Android screen capture; it cannot read protected HDMI video.
+This repository contains two separate Android TV apps: the Chiaki-based streaming app in `android/` and the screen-capture subtitle companion in `translator/`. Each has its own package and release APK. **Chiaki works on its own. Translator is optional; install it only if you want subtitle OCR/translation or speech.** It can also accompany another Remote Play app if Android can capture that app's screen. Translator cannot read protected HDMI video.
+
+## İndirme ve kurulum — uygulamalar ayrı
+
+- **Sadece PS5'e bağlanıp oyun oynamak için:** [Jcrw Chiaki APK'sını](https://github.com/jacarew/jcrw-tv-translator/releases/latest) indirin ve kurun. Translator gerekmez; Chiaki tek başına çalışır.
+- **Altyazı OCR/çevirisi ve isteğe bağlı seslendirme için:** Translator APK'sını aynı [Releases sayfasından](https://github.com/jacarew/jcrw-tv-translator/releases/latest) ayrıca indirin. Bu ayrı bir yardımcı uygulamadır; Chiaki'nin bağımlılığı değildir. Android'in ekran yakalama izni ve diğer uygulamaların üzerinde gösterim izni gerekir.
+
+APK'ları ayrı ayrı kurabilirsiniz. Release açıklamasında her dosyanın adı, ne işe yaradığı ve TV'ye nasıl kurulacağı yazılıdır. Translator HDMI girişini okuyamaz; yalnızca Android'in ekran yakalayabildiği uygulamalarda çalışır.
 
 The app is free to use. Voluntary support for continued development may be offered; it is never required and does not unlock app features. Translation and speech providers may apply their own fees. When online translation is enabled, recognized subtitle text is sent to the selected provider.
 

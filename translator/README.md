@@ -2,6 +2,12 @@
 
 A separate companion app that captures the Android TV display with the user's consent, reads a chosen subtitle rectangle with OCR, translates recognized text, and displays a caption overlay. It does not modify or bundle Chiaki or PlayStation Remote Play. It cannot capture HDMI input through the TV's protected video path; it works only when Android's screen capture API can see the playing app.
 
+## Önemli: Translator isteğe bağlıdır
+
+**PS5'e bağlanıp Remote Play oynamak için yalnızca Jcrw Chiaki APK'sını kurmanız yeterlidir. Translator zorunlu değildir ve Chiaki'nin parçası değildir.** Translator'ı yalnızca altyazıları OCR ile okuyup çevirmek, ekranda göstermek veya seslendirmek istiyorsanız ayrı APK olarak kurun. Chiaki ile ya da Android'in ekran görüntüsünü yakalayabildiği başka bir Remote Play uygulamasıyla birlikte kullanılabilir; HDMI girişini okuyamaz.
+
+Chiaki ve Translator APK'ları GitHub Releases sayfasında iki ayrı indirme dosyasıdır. Sadece istediğiniz uygulamayı kurabilirsiniz.
+
 ## Current implementation
 
 - Android MediaProjection capture, with Android's per-session consent dialog.
