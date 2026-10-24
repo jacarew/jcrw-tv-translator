@@ -5,12 +5,20 @@
 
 Jcrw is a free, independent Android TV application based on the open-source Chiaki Remote Play client. It streams a PlayStation console to Android TV and can OCR, translate, display, and optionally read subtitles aloud. Jcrw is not made, endorsed, or supported by Sony or PlayStation.
 
-This repository contains two separate Android TV apps: the Chiaki-based streaming app in `android/` and the screen-capture subtitle companion in `translator/`. Each has its own package and release APK. **Chiaki works on its own. Translator is optional; install it only if you want subtitle OCR/translation or speech.** It can also accompany another Remote Play app if Android can capture that app's screen. Translator cannot read protected HDMI video.
+This repository contains two separate Android TV apps. They have different jobs, packages, and APK downloads; neither is required for the other.
+
+## 1. Jcrw Chiaki — PS5 Remote Play
+
+Chiaki is an open-source client for PlayStation Remote Play. The game runs on the PS5: the console streams its video and audio over the network, Chiaki decodes and displays them on the TV, and controller input is sent back to the console. A stable network and a registered console are needed. **Chiaki works by itself; Translator is not required.** This is an independent project, not an official Sony app. See [Chiaki's upstream project](https://github.com/chiaki-ng/chiaki-ng) and [PlayStation Remote Play](https://www.playstation.com/en-us/remote-play/).
+
+## 2. Jcrw Translator — separate, optional companion
+
+Install Translator only if you want OCR translation, an on-screen subtitle overlay, or speech. It captures a selected area of the Android screen and can work alongside Chiaki or another compatible Remote Play app. It does not stream or control the PS5, and it cannot read protected HDMI video.
 
 ## İndirme ve kurulum — uygulamalar ayrı
 
-- **Sadece PS5'e bağlanıp oyun oynamak için:** [Jcrw Chiaki APK'sını](https://github.com/jacarew/jcrw-tv-translator/releases/latest) indirin ve kurun. Translator gerekmez; Chiaki tek başına çalışır.
-- **Altyazı OCR/çevirisi ve isteğe bağlı seslendirme için:** Translator APK'sını aynı [Releases sayfasından](https://github.com/jacarew/jcrw-tv-translator/releases/latest) ayrıca indirin. Bu ayrı bir yardımcı uygulamadır; Chiaki'nin bağımlılığı değildir. Android'in ekran yakalama izni ve diğer uygulamaların üzerinde gösterim izni gerekir.
+- **Sadece PS5 Remote Play için:** [Güncel Releases sayfasını](https://github.com/jacarew/jcrw-tv-translator/releases/latest) açın ve `Jcrw-Chiaki-Android-TV-...apk` dosyasını indirin. Translator'ı kurmanız gerekmez.
+- **Altyazı OCR/çevirisi ve isteğe bağlı seslendirme için:** Aynı sayfadan `Jcrw-Translator-Android-TV-...apk` dosyasını ayrıca indirin. Translator isteğe bağlıdır; ekran yakalama ve diğer uygulamaların üzerinde gösterim izinleri gerekir.
 
 APK'ları ayrı ayrı kurabilirsiniz. Release açıklamasında her dosyanın adı, ne işe yaradığı ve TV'ye nasıl kurulacağı yazılıdır. Translator HDMI girişini okuyamaz; yalnızca Android'in ekran yakalayabildiği uygulamalarda çalışır.
 

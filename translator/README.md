@@ -8,6 +8,8 @@ A separate companion app that captures the Android TV display with the user's co
 
 Chiaki ve Translator APK'ları GitHub Releases sayfasında iki ayrı indirme dosyasıdır. Sadece istediğiniz uygulamayı kurabilirsiniz.
 
+Chiaki, PS5'te çalışan oyunun ses ve görüntüsünü ağ üzerinden TV'ye aktarır; Chiaki görüntüyü çözüp gösterir ve kontrolcü girdilerini konsola geri iletir. Translator bu akışa dahil değildir: Android'in ekranda yakalayabildiği altyazı alanını OCR ile okur ve seçilen metin/konuşma sağlayıcısını kullanır. [Chiaki upstream](https://github.com/chiaki-ng/chiaki-ng) · [PlayStation Remote Play](https://www.playstation.com/en-us/remote-play/).
+
 ## Current implementation
 
 - Android MediaProjection capture, with Android's per-session consent dialog.
