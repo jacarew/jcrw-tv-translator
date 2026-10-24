@@ -31,15 +31,32 @@ class MainActivity : Activity() {
     private fun tx(tr:String,en:String)=if(p.uiLanguage=="en")en else tr
     private val mainHandler=Handler(Looper.getMainLooper())
     private val refreshStateRunnable=object:Runnable{override fun run(){refreshMainState();mainHandler.postDelayed(this,1200L)}}
-    private val finishSplash=Runnable{window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);render();screenReady=true;if(!p.licenseAccepted)showLicense() else if(pendingQuickStart){pendingQuickStart=false;mainHandler.postDelayed({beginStart()},250)}}
+    private val finishSplash=Runnable{
+        window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        showLanguageSelection()
+    }
     override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState); p=CompanionPreferences(this);if(!p.performanceProfileApplied){if(p.ocrWidth>=720)p.ocrWidth=320;p.scanIntervalMs=1500;p.performanceProfileApplied=true};pendingQuickStart=intent.getBooleanExtra(EXTRA_QUICK_START,false);showSplash();mainHandler.postDelayed(finishSplash,1800) }
     override fun onNewIntent(intent:Intent){super.onNewIntent(intent);setIntent(intent);if(intent.getBooleanExtra(EXTRA_QUICK_START,false)){pendingQuickStart=true;if(screenReady&&p.licenseAccepted){pendingQuickStart=false;mainHandler.postDelayed({beginStart()},250)}}}
     private fun showSplash(){
         window.setFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN,android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN)
         val root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER;setPadding(24,20,24,24);setBackgroundColor(Color.rgb(7,21,47))}
-        root.addView(ImageView(this).apply{setImageResource(com.jcrw.translator.R.drawable.app_logo);scaleType=ImageView.ScaleType.FIT_CENTER;contentDescription="Jcrw Translator logo"},LinearLayout.LayoutParams(500,500))
-        root.addView(TextView(this).apply{text="Oyunlar Artık Türkçe • jcrw23";textSize=29f;setTextColor(Color.WHITE);gravity=Gravity.CENTER;setPadding(0,16,0,0)})
+        root.addView(ImageView(this).apply{setImageResource(com.jcrw.translator.R.drawable.app_logo);scaleType=ImageView.ScaleType.FIT_CENTER;contentDescription=tx("Jcrw Çeviri logosu","Jcrw Translator logo")},LinearLayout.LayoutParams(500,500))
+        root.addView(TextView(this).apply{text=tx("Oyunlar Artık Türkçe • jcrw23","Games in your language • jcrw23");textSize=29f;setTextColor(Color.WHITE);gravity=Gravity.CENTER;setPadding(0,16,0,0)})
         setContentView(root)
+    }
+    private fun showLanguageSelection(){
+        val choices=arrayOf("Türkçe","English")
+        val dialog=AlertDialog.Builder(this).setTitle("Arayüz dili / Interface language")
+            .setItems(choices){_,which->p.uiLanguage=if(which==1)"en" else "tr";continueStartupAfterLanguageChoice()}
+            .setCancelable(false).create()
+        dialog.setCanceledOnTouchOutside(false)
+        dialog.setOnShowListener{dialog.listView?.requestFocus()}
+        dialog.show()
+    }
+    private fun continueStartupAfterLanguageChoice(){
+        if(!::p.isInitialized)return
+        render();screenReady=true
+        if(!p.licenseAccepted)showLicense() else if(pendingQuickStart){pendingQuickStart=false;mainHandler.postDelayed({beginStart()},250)}
     }
     private fun showLicense(){
         val english=p.uiLanguage=="en"
@@ -49,7 +66,7 @@ class MainActivity : Activity() {
         dialog.setCanceledOnTouchOutside(false);dialog.setOnCancelListener{finishAndRemoveTask()};dialog.setOnShowListener{dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.requestFocus()};dialog.show()
     }
     private fun render() {
-        val page=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(44),dp(28),dp(44),dp(28));background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(7,20,48),Color.rgb(17,43,82))).apply{cornerRadius=dp(22).toFloat()}}
+        val page=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(44),dp(28),dp(44),dp(144));background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(7,20,48),Color.rgb(17,43,82))).apply{cornerRadius=dp(22).toFloat()}}
         val header=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL}
         header.addView(ImageView(this).apply{setImageResource(R.drawable.app_logo);scaleType=ImageView.ScaleType.FIT_CENTER;contentDescription="Jcrw Translator"},LinearLayout.LayoutParams(dp(108),dp(108)))
         val titles=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),0,0,0)}
@@ -66,7 +83,17 @@ class MainActivity : Activity() {
             {showLicenses()},{showUsagePrivacy()})
         supportBanner(page)
         actionButton(page,tx("Simge durumuna küçült","Minimize to background"),false){moveTaskToBack(true)}
-        val scroll=ScrollView(this).apply{isFillViewport=true};scroll.addView(page);setContentView(scroll);refreshMainState()
+        val scroll=ScrollView(this).apply{isFillViewport=true};scroll.addView(page)
+        val root=FrameLayout(this).apply {
+            addView(scroll,FrameLayout.LayoutParams(-1,-1))
+            addView(ImageView(this@MainActivity).apply {
+                setImageResource(R.drawable.bmc_qr);scaleType=ImageView.ScaleType.FIT_CENTER
+                setPadding(dp(4),dp(4),dp(4),dp(4));background=shape(Color.WHITE,Color.rgb(205,215,230))
+                contentDescription=tx("Buy Me a Coffee QR kodu","Buy Me a Coffee QR code")
+                isFocusable=true;isClickable=true;setOnClickListener{openGlobalSupportPage()}
+            },FrameLayout.LayoutParams(dp(108),dp(108),Gravity.TOP or Gravity.END).apply{rightMargin=dp(18);topMargin=dp(18)})
+        }
+        setContentView(root);refreshMainState()
     }
     private fun dp(value:Int)= (value*resources.displayMetrics.density).toInt()
     private fun shape(color:Int,stroke:Int=Color.TRANSPARENT)=GradientDrawable().apply{setColor(color);cornerRadius=dp(14).toFloat();if(stroke!=Color.TRANSPARENT)setStroke(dp(2),stroke)}
@@ -91,11 +118,16 @@ class MainActivity : Activity() {
         parent.addView(pair,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(12)})
     }
     private fun supportBanner(parent:LinearLayout) {
+        val bannerBackground=StateListDrawable().apply {
+            addState(intArrayOf(android.R.attr.state_pressed),shape(Color.rgb(197,54,139),Color.rgb(255,220,242)))
+            addState(intArrayOf(android.R.attr.state_focused),shape(Color.rgb(197,54,139),Color.rgb(255,220,242)))
+            addState(intArrayOf(),GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                intArrayOf(Color.rgb(82,37,83),Color.rgb(48,45,91))).apply { cornerRadius=dp(16).toFloat(); setStroke(dp(1),Color.rgb(209,110,180)) })
+        }
         val banner=LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=Gravity.CENTER_VERTICAL
             setPadding(dp(18),dp(14),dp(18),dp(14))
-            background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                intArrayOf(Color.rgb(82,37,83),Color.rgb(48,45,91))).apply { cornerRadius=dp(16).toFloat(); setStroke(dp(1),Color.rgb(209,110,180)) }
+            background=bannerBackground
             isFocusable=true; isClickable=true
         }
         banner.addView(ImageView(this).apply { setImageResource(R.drawable.ic_coffee); contentDescription=tx("Kahve fincanı","Coffee cup") },LinearLayout.LayoutParams(dp(48),dp(48)))
@@ -103,7 +135,7 @@ class MainActivity : Activity() {
         copy.addView(TextView(this).apply { text=tx("☕ Projeye bir kahve ısmarlayın","☕ Buy the project a coffee"); textSize=18f; typeface=android.graphics.Typeface.DEFAULT_BOLD; setTextColor(Color.WHITE) })
         copy.addView(TextView(this).apply { text=tx("Geliştirmeye gönüllü destek • Zorunlu değil","Voluntary support for development • Optional"); textSize=14f; setTextColor(Color.rgb(232,220,245)); setPadding(0,dp(4),0,0) })
         banner.addView(copy,LinearLayout.LayoutParams(0,-2,1f))
-        banner.setOnClickListener { showSupportInfo() }
+        banner.setOnClickListener { showSupportOptions() }
         parent.addView(banner,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(2); bottomMargin=dp(14) })
     }
     private fun showSupportInfo() {
@@ -130,6 +162,16 @@ class MainActivity : Activity() {
             .setTitle(tx("☕ Jcrw projesine destek","☕ Support the Jcrw project"))
             .setView(scroll)
             .setPositiveButton(tx("Tamam","OK"),null).show()
+    }
+    private fun showSupportOptions(){
+        val options=arrayOf(tx("Papara · Türkiye","Papara · Türkiye"),tx("Buy Me a Coffee · Uluslararası","Buy Me a Coffee · International"))
+        AlertDialog.Builder(this).setTitle(tx("Projeye nasıl destek olmak istersin?","How would you like to support the project?"))
+            .setItems(options){_,which->if(which==0)showSupportInfo() else openGlobalSupportPage()}
+            .setNegativeButton(tx("İptal","Cancel"),null).show()
+    }
+    private fun openGlobalSupportPage(){
+        try{startActivity(Intent(Intent.ACTION_VIEW,Uri.parse("https://buymeacoffee.com/jcrw")))}
+        catch(_:android.content.ActivityNotFoundException){Toast.makeText(this,tx("Bağlantıyı açacak tarayıcı bulunamadı","No browser is available to open the link"),Toast.LENGTH_LONG).show()}
     }
     private fun showUsagePrivacy(){AlertDialog.Builder(this).setTitle(tx("Nasıl çalışır?","How it works")).setMessage(tx("Ekran yakalama izni verdikten sonra Remote Play veya Chiaki'ye dönün. Jcrw seçtiğiniz altyazı alanını cihazda OCR ile okur. Yalnızca OCR metni seçtiğiniz çeviri sağlayıcısına gönderilir; görüntü gönderilmez. Diğer uygulamaların üstünde gösterim izni gerekir. Ekran yakalama sırasında PlayStation ve çevrimiçi hizmetlerin gizlilik koşullarını kontrol edin.","After granting screen-capture permission, return to Remote Play or Chiaki. Jcrw reads only the selected subtitle area on-device. Only OCR text—not images—is sent to the selected translation provider. Overlay permission is also required. Check the privacy terms of PlayStation and any online provider you use.")).setPositiveButton(tx("Tamam","OK"),null).show()}
     private fun serviceIsRunning():Boolean = try{(getSystemService(ACTIVITY_SERVICE) as android.app.ActivityManager).getRunningServices(Int.MAX_VALUE).any{it.service.className==TranslatorService::class.java.name}}catch(_:Exception){false}

@@ -43,6 +43,7 @@ class CompanionPreferences(context: Context) {
     var geminiFemaleVoice: String get() = prefs.getString("gemini_female_voice", "Kore") ?: "Kore"; set(v) = prefs.edit().putString("gemini_female_voice",v).apply()
     var geminiMaleVoice: String get() = prefs.getString("gemini_male_voice", "Puck") ?: "Puck"; set(v) = prefs.edit().putString("gemini_male_voice",v).apply()
     var uiLanguage: String get() = prefs.getString("ui_language", "tr") ?: "tr"; set(v) = prefs.edit().putString("ui_language",v).apply()
+    val hasUiLanguageSelection: Boolean get() = prefs.contains("ui_language")
     var licenseAccepted: Boolean get() = prefs.getBoolean("license_accepted",false); set(v) = prefs.edit().putBoolean("license_accepted",v).apply()
     var captureRunning: Boolean get() = prefs.getBoolean("capture_running",false); set(v) = prefs.edit().putBoolean("capture_running",v).apply()
     var captureStatus: String get() = prefs.getString("capture_status","Hazır • Çeviri başlamadı") ?: "Hazır • Çeviri başlamadı"; set(v) = prefs.edit().putString("capture_status",v).apply()

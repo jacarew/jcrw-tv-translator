@@ -14,4 +14,9 @@
         android:icon="@drawable/ic_settings"
         android:title="@string/action_settings"
         app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_support_project"
+        android:title="@string/support_project_title"
+        app:showAsAction="never" />
 </menu>

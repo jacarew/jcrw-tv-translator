@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="language_selection_title">Interface language / Arayüz dili</string>
+    <string name="language_turkish">Turkish</string>
+    <string name="language_english">English</string>
     <string name="app_name">Jcrw</string>
     <string name="title_main">Jcrw</string>
     <string name="title_settings">Settings</string>
@@ -145,6 +148,12 @@
     <string name="subtitle_voice_character_gender_summary">Save a voice style for the selected character</string>
     <string name="support_project_title">☕ Support the Jcrw project</string>
     <string name="support_project_summary">Voluntary support for development • Optional</string>
+    <string name="support_project_home">☕ Support the project</string>
+    <string name="support_project_global">International support · Buy Me a Coffee</string>
+    <string name="support_project_browser_missing">No browser is available to open the link.</string>
+    <string name="support_project_options_title">How would you like to support the project?</string>
+    <string name="support_project_option_papara">Papara · Türkiye</string>
+    <string name="support_project_option_global">Buy Me a Coffee · International</string>
     <string name="support_project_message">Jcrw is free. If you wish, choose a voluntary support amount and scan its Papara QR code. Support is optional and does not unlock app features.\n\nCheck the amount before confirming payment. Users remain responsible for using the app and third-party services.</string>
 </resources>
 

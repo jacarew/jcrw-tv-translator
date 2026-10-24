@@ -4,6 +4,7 @@ package com.metallic.chiaki.main
 
 import android.app.ActivityOptions
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -38,6 +39,7 @@ import com.metallic.chiaki.lib.DiscoveryHost
 import com.metallic.chiaki.manualconsole.EditManualConsoleActivity
 import com.metallic.chiaki.regist.RegistActivity
 import com.metallic.chiaki.settings.SettingsActivity
+import com.metallic.chiaki.settings.CoffeeSupportGifView
 import com.metallic.chiaki.stream.StreamActivity
 
 class MainActivity : AppCompatActivity()
@@ -56,6 +58,8 @@ class MainActivity : AppCompatActivity()
 
 		title = ""
 		setSupportActionBar(binding.toolbar)
+		binding.supportProjectHomeButton.setOnClickListener { showSupportOptions() }
+		binding.bmcQrHome.setOnClickListener { openGlobalSupportPage() }
 
 		binding.floatingActionButton.setOnClickListener {
 			expandFloatingActionButton(!binding.floatingActionButton.isExpanded)
@@ -94,9 +98,34 @@ class MainActivity : AppCompatActivity()
 			if(isFinishing || isDestroyed) return@postDelayed
 			binding.startupLogoView.animate().alpha(0f).setDuration(250).withEndAction {
 				binding.startupLogoView.visibility = View.GONE
-				showFirstRunNoticeIfNeeded()
+				continueStartupAfterLanguageChoice()
 			}.start()
 		}, 1_250L)
+	}
+
+	private fun continueStartupAfterLanguageChoice()
+	{
+		showLanguageSelection()
+	}
+
+	private fun showLanguageSelection()
+	{
+		val preferences = Preferences(this)
+		MaterialAlertDialogBuilder(this)
+			.setTitle(R.string.language_selection_title)
+			.setItems(arrayOf(getString(R.string.language_turkish), getString(R.string.language_english))) { _, which ->
+				val language = if(which == 1) "en" else "tr"
+				preferences.appLanguage = language
+				if(AppCompatDelegate.getApplicationLocales().toLanguageTags() != language)
+				{
+					AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language))
+					recreate()
+				}
+				else
+					showFirstRunNoticeIfNeeded()
+			}
+			.setCancelable(false)
+			.show()
 	}
 
 	private fun showFirstRunNoticeIfNeeded()
@@ -184,6 +213,77 @@ class MainActivity : AppCompatActivity()
 			binding.emptyInfoLayout.visibility = View.GONE
 	}
 
+	private fun showSupportProject()
+	{
+		val content = android.widget.LinearLayout(this).apply {
+			orientation = android.widget.LinearLayout.VERTICAL
+			setPadding(28, 12, 28, 8)
+			addView(CoffeeSupportGifView(this@MainActivity), android.widget.LinearLayout.LayoutParams(-1, (150 * resources.displayMetrics.density).toInt()))
+			addView(TextView(this@MainActivity).apply {
+				text = getString(R.string.support_project_message)
+				textSize = 16f
+				setTextColor(android.graphics.Color.WHITE)
+				setPadding(0, 12, 0, 4)
+			})
+			val amounts = if(Preferences(this@MainActivity).appLanguage == "en") arrayOf("Choose an amount", "₺10", "₺20", "₺50", "₺100", "₺200") else arrayOf("Tutar seçin", "₺10", "₺20", "₺50", "₺100", "₺200")
+			val qr = android.widget.ImageView(this@MainActivity).apply {
+				scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
+				visibility = View.GONE
+				contentDescription = getString(R.string.support_project_title)
+			}
+			val picker = android.widget.Spinner(this@MainActivity).apply {
+				adapter = android.widget.ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, amounts)
+				onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+					override fun onNothingSelected(parent: android.widget.AdapterView<*>?) { qr.visibility = View.GONE }
+					override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+						val resource = when(position) {
+							1 -> R.drawable.papara_10
+							2 -> R.drawable.papara_20
+							3 -> R.drawable.papara_50
+							4 -> R.drawable.papara_100
+							5 -> R.drawable.papara_200
+							else -> 0
+						}
+						qr.visibility = if(resource == 0) View.GONE else View.VISIBLE
+						if(resource != 0) qr.setImageResource(resource)
+					}
+				}
+			}
+			addView(picker, android.widget.LinearLayout.LayoutParams(-1, (56 * resources.displayMetrics.density).toInt()))
+			addView(qr, android.widget.LinearLayout.LayoutParams(-1, (300 * resources.displayMetrics.density).toInt()))
+		}
+		val scroll = ScrollView(this).apply { addView(content) }
+		MaterialAlertDialogBuilder(this)
+			.setTitle(R.string.support_project_title)
+			.setView(scroll)
+			.setNeutralButton(R.string.support_project_global) { _, _ -> openGlobalSupportPage() }
+			.setPositiveButton(android.R.string.ok, null)
+			.show()
+	}
+
+	private fun showSupportOptions()
+	{
+		MaterialAlertDialogBuilder(this)
+			.setTitle(R.string.support_project_options_title)
+			.setItems(arrayOf(getString(R.string.support_project_option_papara), getString(R.string.support_project_option_global))) { _, which ->
+				if(which == 0) showSupportProject() else openGlobalSupportPage()
+			}
+			.setNegativeButton(android.R.string.cancel, null)
+			.show()
+	}
+
+	private fun openGlobalSupportPage()
+	{
+		try
+		{
+			startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://buymeacoffee.com/jcrw")))
+		}
+		catch(_: android.content.ActivityNotFoundException)
+		{
+			android.widget.Toast.makeText(this, R.string.support_project_browser_missing, android.widget.Toast.LENGTH_LONG).show()
+		}
+	}
+
 	private fun expandFloatingActionButton(expand: Boolean)
 	{
 		binding.floatingActionButton.isExpanded = expand
@@ -241,6 +341,12 @@ class MainActivity : AppCompatActivity()
 			Intent(this, SettingsActivity::class.java).also {
 				startActivity(it)
 			}
+			true
+		}
+
+		R.id.action_support_project ->
+		{
+			showSupportOptions()
 			true
 		}
 
