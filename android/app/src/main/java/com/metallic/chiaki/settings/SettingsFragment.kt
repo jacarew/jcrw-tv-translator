@@ -382,6 +382,10 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 			showSetupTutorial()
 			true
 		}
+		preferenceScreen.findPreference<Preference>("support_project")?.setOnPreferenceClickListener {
+			showSupportProject()
+			true
+		}
 		preferenceScreen.findPreference<ListPreference>(preferences.subtitleVoiceGameKey)?.let { game ->
 			val ids = arrayOf("") + Preferences.voiceGames.keys.toTypedArray()
 			val names = arrayOf(if(preferences.appLanguage == "en") "Choose a game" else "Oyun seç") + Preferences.voiceGames.values.toTypedArray()
@@ -527,6 +531,53 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		val scroll = ScrollView(requireContext()).apply { addView(text) }
 		AlertDialog.Builder(requireContext())
 			.setTitle(R.string.setup_tutorial_title)
+			.setView(scroll)
+			.setPositiveButton(android.R.string.ok, null)
+			.show()
+	}
+
+	private fun showSupportProject()
+	{
+		val content = android.widget.LinearLayout(requireContext()).apply {
+			orientation = android.widget.LinearLayout.VERTICAL
+			setPadding(28, 12, 28, 8)
+			addView(CoffeeSupportGifView(requireContext()), android.widget.LinearLayout.LayoutParams(-1, (150 * resources.displayMetrics.density).toInt()))
+			addView(TextView(requireContext()).apply {
+				text = getString(R.string.support_project_message)
+				textSize = 16f
+				setTextColor(android.graphics.Color.WHITE)
+				setPadding(0, 12, 0, 4)
+			})
+			val amounts = if(preferences.appLanguage == "en") arrayOf("Choose an amount", "₺10", "₺20", "₺50", "₺100", "₺200") else arrayOf("Tutar seçin", "₺10", "₺20", "₺50", "₺100", "₺200")
+			val qr = android.widget.ImageView(requireContext()).apply {
+				scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
+				visibility = android.view.View.GONE
+				contentDescription = if(preferences.appLanguage == "en") "Papara payment QR code" else "Papara ödeme QR kodu"
+			}
+			val picker = android.widget.Spinner(requireContext()).apply {
+				adapter = android.widget.ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, amounts)
+				onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+					override fun onNothingSelected(parent: android.widget.AdapterView<*>?) { qr.visibility = android.view.View.GONE }
+					override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+						val resource = when(position) {
+							1 -> R.drawable.papara_10
+							2 -> R.drawable.papara_20
+							3 -> R.drawable.papara_50
+							4 -> R.drawable.papara_100
+							5 -> R.drawable.papara_200
+							else -> 0
+						}
+						qr.visibility = if(resource == 0) android.view.View.GONE else android.view.View.VISIBLE
+						if(resource != 0) qr.setImageResource(resource)
+					}
+				}
+			}
+			addView(picker, android.widget.LinearLayout.LayoutParams(-1, (56 * resources.displayMetrics.density).toInt()))
+			addView(qr, android.widget.LinearLayout.LayoutParams(-1, (300 * resources.displayMetrics.density).toInt()))
+		}
+		val scroll = ScrollView(requireContext()).apply { addView(content) }
+		AlertDialog.Builder(requireContext())
+			.setTitle(R.string.support_project_title)
 			.setView(scroll)
 			.setPositiveButton(android.R.string.ok, null)
 			.show()

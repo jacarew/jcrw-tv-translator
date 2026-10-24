@@ -1,0 +1,6 @@
+# Local build artifacts and Android Studio state
+local.properties
+release-signing.properties
+.android-user/
+app/build/
+.gradle/

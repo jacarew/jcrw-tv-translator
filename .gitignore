@@ -48,3 +48,10 @@ chiaki.conf
 .cache/
 /*.app
 /*.dmg
+
+# Jcrw Translator local settings and build outputs
+/translator/local.properties
+/translator/release-signing.properties
+/translator/.gradle/
+/translator/.android-user/
+/translator/app/build/

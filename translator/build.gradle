@@ -1,0 +1,9 @@
+// Use the same classpath resolution form as the existing Chiaki Android build.
+// This works with the Gradle artifacts already cached by Android Studio.
+buildscript {
+    repositories { google(); mavenCentral() }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.5.2'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24'
+    }
+}

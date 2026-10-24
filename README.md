@@ -5,6 +5,8 @@
 
 Jcrw is a free, independent Android TV application based on the open-source Chiaki Remote Play client. It streams a PlayStation console to Android TV and can OCR, translate, display, and optionally read subtitles aloud. Jcrw is not made, endorsed, or supported by Sony or PlayStation.
 
+This repository contains two separate Android TV apps: the Chiaki-based streaming app in `android/` and the screen-capture subtitle companion in `translator/`. Each has its own package and release APK. The companion can only translate content visible to Android screen capture; it cannot read protected HDMI video.
+
 The app is free to use. Voluntary support for continued development may be offered; it is never required and does not unlock app features. Translation and speech providers may apply their own fees. When online translation is enabled, recognized subtitle text is sent to the selected provider.
 
 ## Android TV build

@@ -99,6 +99,11 @@
 			app:title="@string/setup_tutorial_title"
 			app:summary="@string/setup_tutorial_summary"
 			app:icon="@drawable/ic_log" />
+		<Preference
+			app:key="support_project"
+			app:title="@string/support_project_title"
+			app:summary="@string/support_project_summary"
+			app:icon="@drawable/ic_coffee" />
     </PreferenceCategory>
 
     <PreferenceCategory

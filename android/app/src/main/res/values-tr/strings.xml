@@ -112,5 +112,8 @@
     <string name="subtitle_voice_character_summary">Altyazıda iki noktadan önce görünen karakteri seç</string>
     <string name="subtitle_voice_character_gender_title">Karakterin ses tonu</string>
     <string name="subtitle_voice_character_gender_summary">Seçili karakter için ses tonunu kaydet</string>
+    <string name="support_project_title">☕ Jcrw projesine destek</string>
+    <string name="support_project_summary">Geliştirmeye gönüllü destek • Zorunlu değil</string>
+    <string name="support_project_message">Jcrw ücretsizdir. İstersen listeden gönüllü destek tutarını seçip Papara QR kodunu tara. Destek isteğe bağlıdır ve uygulama özelliklerini açmaz.\n\nÖdemeyi onaylamadan önce tutarı kontrol et. Uygulamayı ve üçüncü taraf hizmetlerini kullanma sorumluluğu kullanıcıya aittir.</string>
 </resources>
 

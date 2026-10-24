@@ -143,5 +143,8 @@
     <string name="subtitle_voice_character_summary">Choose a character name as it appears before the colon in subtitles</string>
     <string name="subtitle_voice_character_gender_title">Selected character voice</string>
     <string name="subtitle_voice_character_gender_summary">Save a voice style for the selected character</string>
+    <string name="support_project_title">☕ Support the Jcrw project</string>
+    <string name="support_project_summary">Voluntary support for development • Optional</string>
+    <string name="support_project_message">Jcrw is free. If you wish, choose a voluntary support amount and scan its Papara QR code. Support is optional and does not unlock app features.\n\nCheck the amount before confirming payment. Users remain responsible for using the app and third-party services.</string>
 </resources>
 
