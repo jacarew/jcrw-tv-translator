@@ -18,6 +18,9 @@ import android.text.InputType
 import android.view.Gravity
 import android.view.View
 import android.widget.*
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 
 class MainActivity : Activity() {
     private lateinit var p: CompanionPreferences
@@ -56,14 +59,64 @@ class MainActivity : Activity() {
     private fun continueStartupAfterLanguageChoice(){
         if(!::p.isInitialized)return
         render();screenReady=true
-        if(!p.licenseAccepted)showLicense() else if(pendingQuickStart){pendingQuickStart=false;mainHandler.postDelayed({beginStart()},250)}
+        if(!p.licenseAccepted)showLicense() else if(pendingQuickStart){pendingQuickStart=false;mainHandler.postDelayed({beginStart()},250)} else checkForUpdates()
     }
     private fun showLicense(){
         val english=p.uiLanguage=="en"
         val title=if(english)"Jcrw Translator — first run" else "Jcrw Çeviri — ilk kullanım"
         val body=if(english) "Jcrw Translator is provided free by its publisher. Use it at your own risk; you are responsible for permissions, device settings, and any effects on your device or accounts.\n\nWhen enabled, screen capture is processed on this device for OCR. Only recognized subtitle text—not screenshots—is sent to the translation or speech provider you select. Review that provider's privacy terms and API charges.\n\nThis application includes modified Chiaki-derived translation and speech code under AGPL-3.0-only-OpenSSL. License notices and corresponding source are provided with the project. The upstream license grants rights that cannot be removed by this notice.\n\nAccept to continue. If you decline or return, the application will close." else "Jcrw Çeviri yayıncısı tarafından ücretsiz sunulur. Kendi sorumluluğunuzda kullanın; izinler, cihaz ayarları ve cihazınızda veya hesaplarınızda oluşabilecek etkilerden siz sorumlusunuz.\n\nEtkinleştirdiğinizde ekran yakalama, OCR için bu cihazda işlenir. Ekran görüntüsü değil, yalnızca tanınan altyazı metni seçtiğiniz çeviri veya ses sağlayıcısına gönderilir. Sağlayıcının gizlilik koşullarını ve olası API ücretlerini kontrol edin.\n\nUygulamada AGPL-3.0-only-OpenSSL lisanslı Chiaki kaynaklı değiştirilmiş çeviri ve ses kodu bulunur. Lisans bildirimleri ve ilgili kaynak proje içinde sağlanır. Üst kaynak lisansının tanıdığı haklar bu bildirimle kaldırılamaz.\n\nDevam etmek için kabul edin. Reddederseniz veya geri çıkarsanız uygulama kapanır."
-        val dialog=AlertDialog.Builder(this).setTitle(title).setMessage(body).setCancelable(true).setPositiveButton(if(english)"Accept" else "Kabul ediyorum"){_,_->p.licenseAccepted=true}.setNegativeButton(if(english)"Decline" else "Kabul etmiyorum"){_,_->finishAndRemoveTask()}.create()
+        val dialog=AlertDialog.Builder(this).setTitle(title).setMessage(body).setCancelable(true).setPositiveButton(if(english)"Accept" else "Kabul ediyorum"){_,_->p.licenseAccepted=true;if(!pendingQuickStart)mainHandler.postDelayed({checkForUpdates()},500)}.setNegativeButton(if(english)"Decline" else "Kabul etmiyorum"){_,_->finishAndRemoveTask()}.create()
         dialog.setCanceledOnTouchOutside(false);dialog.setOnCancelListener{finishAndRemoveTask()};dialog.setOnShowListener{dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.requestFocus()};dialog.show()
+    }
+
+    private fun checkForUpdates(){
+        val prefs=getSharedPreferences("jcrw_translator_updates",Context.MODE_PRIVATE)
+        val now=System.currentTimeMillis()
+        if(now-prefs.getLong("last_successful_check",0L)<12L*60L*60L*1000L)return
+        Thread({
+            var connection:HttpURLConnection?=null
+            try{
+                connection=(URL("https://api.github.com/repos/jacarew/jcrw-tv-translator/releases/latest").openConnection() as HttpURLConnection).apply{
+                    connectTimeout=8000;readTimeout=8000
+                    setRequestProperty("Accept","application/vnd.github+json")
+                    setRequestProperty("User-Agent","Jcrw-Translator-Android-TV")
+                }
+                if(connection.responseCode !in 200..299)return@Thread
+                val release=JSONObject(connection.inputStream.bufferedReader().use{it.readText()})
+                val assets=release.optJSONArray("assets")?:return@Thread
+                val versionPattern=Regex("(?i)Jcrw-Translator-Android-TV-v([0-9]+(?:\\.[0-9]+){1,2})-universal\\.apk")
+                val latestVersion=(0 until assets.length()).asSequence()
+                    .mapNotNull{assets.optJSONObject(it)?.optString("name")?.let(versionPattern::find)?.groupValues?.getOrNull(1)}
+                    .firstOrNull()?:return@Thread
+                val releaseUrl=release.optString("html_url")
+                if(releaseUrl.isBlank())return@Thread
+                prefs.edit().putLong("last_successful_check",System.currentTimeMillis()).apply()
+                @Suppress("DEPRECATION")
+                val currentVersion=packageManager.getPackageInfo(packageName,0).versionName.orEmpty()
+                if(compareVersions(latestVersion,currentVersion)<=0)return@Thread
+                Handler(Looper.getMainLooper()).post{
+                    if(isFinishing||isDestroyed)return@post
+                    AlertDialog.Builder(this)
+                        .setTitle(tx("Yeni sürüm hazır","Update available"))
+                        .setMessage(tx("Jcrw Çeviri $latestVersion sürümü yayımlandı. İndirme sayfasını açmak ister misiniz?","Jcrw Translator $latestVersion is available. Open the download page?"))
+                        .setNegativeButton(tx("Daha sonra","Later"),null)
+                        .setPositiveButton(tx("İndir","Download")){_,_->startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(releaseUrl)))}
+                        .show()
+                }
+            }catch(_:Exception){
+                // Optional update checks must never interrupt translation or startup.
+            }finally{connection?.disconnect()}
+        },"jcrw-translator-update-check").start()
+    }
+
+    private fun compareVersions(left:String,right:String):Int{
+        val a=left.split('.').map{it.toIntOrNull()?:0}
+        val b=right.split('.').map{it.toIntOrNull()?:0}
+        for(i in 0 until maxOf(a.size,b.size)){
+            val comparison=(a.getOrElse(i){0}).compareTo(b.getOrElse(i){0})
+            if(comparison!=0)return comparison
+        }
+        return 0
     }
     private fun render() {
         val page=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(44),dp(28),dp(44),dp(144));background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(7,20,48),Color.rgb(17,43,82))).apply{cornerRadius=dp(22).toFloat()}}
