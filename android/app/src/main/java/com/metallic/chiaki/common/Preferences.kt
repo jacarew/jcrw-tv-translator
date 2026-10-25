@@ -175,6 +175,7 @@ class Preferences(context: Context)
 		get() = sharedPreferences.getString(appLanguageKey, "tr") ?: "tr"
 		set(value) { sharedPreferences.edit().putString(appLanguageKey, value).apply() }
 	val appLanguageKey = "ui_language"
+	val hasAppLanguageSelection: Boolean get() = sharedPreferences.contains(appLanguageKey)
 	var subtitleTargetLanguage: String
 		get() = sharedPreferences.getString(subtitleTargetLanguageKey, "tr") ?: "tr"
 		set(value) { sharedPreferences.edit().putString(subtitleTargetLanguageKey, value).apply() }

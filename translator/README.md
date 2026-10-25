@@ -4,7 +4,7 @@ A separate companion app that captures the Android TV display with the user's co
 
 ## Önemli: Translator isteğe bağlıdır
 
-**PS5'e bağlanıp Remote Play oynamak için yalnızca Jcrw Chiaki APK'sını kurmanız yeterlidir. Translator zorunlu değildir ve Chiaki'nin parçası değildir.** Translator'ı yalnızca altyazıları OCR ile okuyup çevirmek, ekranda göstermek veya seslendirmek istiyorsanız ayrı APK olarak kurun. Chiaki ile ya da Android'in ekran görüntüsünü yakalayabildiği başka bir Remote Play uygulamasıyla birlikte kullanılabilir; HDMI girişini okuyamaz.
+**PS5'e bağlanıp Remote Play oynamak için yalnızca Jcrw Chiaki APK'sını kurmanız yeterlidir. Translator zorunlu değildir ve Chiaki'nin parçası değildir.** Translator'ı oyunlarda, film ve dizilerde ya da Android ekranında görünen diğer videolarda altyazıyı OCR ile okuyup çevirmek, ekranda göstermek veya seslendirmek için kullanabilirsiniz. Ayrı APK olarak kurulur; Chiaki veya Android'in ekran görüntüsünü yakalayabildiği başka bir uygulamayla birlikte çalışabilir. HDMI girişini ve DRM/FLAG_SECURE ile korunan görüntüleri okuyamaz.
 
 Chiaki ve Translator APK'ları GitHub Releases sayfasında iki ayrı indirme dosyasıdır. Sadece istediğiniz uygulamayı kurabilirsiniz.
 

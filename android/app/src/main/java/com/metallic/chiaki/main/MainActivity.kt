@@ -105,7 +105,21 @@ class MainActivity : AppCompatActivity()
 
 	private fun continueStartupAfterLanguageChoice()
 	{
-		showLanguageSelection()
+		val preferences = Preferences(this)
+		if(!preferences.hasAppLanguageSelection)
+		{
+			showLanguageSelection()
+			return
+		}
+
+		if(AppCompatDelegate.getApplicationLocales().toLanguageTags().substringBefore('-') != preferences.appLanguage)
+		{
+			AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(preferences.appLanguage))
+			recreate()
+			return
+		}
+
+		showFirstRunNoticeIfNeeded()
 	}
 
 	private fun showLanguageSelection()

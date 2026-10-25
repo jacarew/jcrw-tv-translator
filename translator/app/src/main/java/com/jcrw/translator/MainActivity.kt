@@ -36,7 +36,7 @@ class MainActivity : Activity() {
     private val refreshStateRunnable=object:Runnable{override fun run(){refreshMainState();mainHandler.postDelayed(this,1200L)}}
     private val finishSplash=Runnable{
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN)
-        showLanguageSelection()
+        if(p.hasUiLanguageSelection)continueStartupAfterLanguageChoice() else showLanguageSelection()
     }
     override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState); p=CompanionPreferences(this);if(!p.performanceProfileApplied){if(p.ocrWidth>=720)p.ocrWidth=320;p.scanIntervalMs=1500;p.performanceProfileApplied=true};pendingQuickStart=intent.getBooleanExtra(EXTRA_QUICK_START,false);showSplash();mainHandler.postDelayed(finishSplash,1800) }
     override fun onNewIntent(intent:Intent){super.onNewIntent(intent);setIntent(intent);if(intent.getBooleanExtra(EXTRA_QUICK_START,false)){pendingQuickStart=true;if(screenReady&&p.licenseAccepted){pendingQuickStart=false;mainHandler.postDelayed({beginStart()},250)}}}
@@ -44,7 +44,7 @@ class MainActivity : Activity() {
         window.setFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN,android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN)
         val root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER;setPadding(24,20,24,24);setBackgroundColor(Color.rgb(7,21,47))}
         root.addView(ImageView(this).apply{setImageResource(com.jcrw.translator.R.drawable.app_logo);scaleType=ImageView.ScaleType.FIT_CENTER;contentDescription=tx("Jcrw Çeviri logosu","Jcrw Translator logo")},LinearLayout.LayoutParams(500,500))
-        root.addView(TextView(this).apply{text=tx("Oyunlar Artık Türkçe • jcrw23","Games in your language • jcrw23");textSize=29f;setTextColor(Color.WHITE);gravity=Gravity.CENTER;setPadding(0,16,0,0)})
+        root.addView(TextView(this).apply{text=tx("Artık tüm dijital içerikler Türkçe • jcrw23","All your digital content, in Turkish • jcrw23");textSize=29f;setTextColor(Color.WHITE);gravity=Gravity.CENTER;setPadding(0,16,0,0)})
         setContentView(root)
     }
     private fun showLanguageSelection(){
@@ -124,7 +124,7 @@ class MainActivity : Activity() {
         header.addView(ImageView(this).apply{setImageResource(R.drawable.app_logo);scaleType=ImageView.ScaleType.FIT_CENTER;contentDescription="Jcrw Translator"},LinearLayout.LayoutParams(dp(108),dp(108)))
         val titles=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),0,0,0)}
         titles.addView(TextView(this).apply{text="Jcrw Translator";textSize=30f;typeface=android.graphics.Typeface.create("sans-serif-medium",android.graphics.Typeface.BOLD);setTextColor(Color.WHITE)})
-        titles.addView(TextView(this).apply{text=tx("Oyunlar artık Türkçe","Games in your language");textSize=17f;setTextColor(Color.rgb(226,190,220));setPadding(0,dp(5),0,0)})
+        titles.addView(TextView(this).apply{text=tx("Artık tüm dijital içerikler Türkçe","All your digital content, in Turkish");textSize=17f;setTextColor(Color.rgb(226,190,220));setPadding(0,dp(5),0,0)})
         header.addView(titles,LinearLayout.LayoutParams(0,-2,1f));page.addView(header,LinearLayout.LayoutParams(-1,-2))
         val statusCard=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(20),dp(14),dp(20),dp(14));background=shape(Color.rgb(22,44,77),Color.rgb(64,112,155))}
         statusCard.addView(TextView(this).apply{text=tx("ÇEVİRİ DURUMU","TRANSLATION STATUS");textSize=12f;typeface=android.graphics.Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(158,191,228))})
@@ -144,7 +144,7 @@ class MainActivity : Activity() {
                 setPadding(dp(4),dp(4),dp(4),dp(4));background=shape(Color.WHITE,Color.rgb(205,215,230))
                 contentDescription=tx("Buy Me a Coffee QR kodu","Buy Me a Coffee QR code")
                 isFocusable=true;isClickable=true;setOnClickListener{openGlobalSupportPage()}
-            },FrameLayout.LayoutParams(dp(108),dp(108),Gravity.TOP or Gravity.END).apply{rightMargin=dp(18);topMargin=dp(18)})
+            },FrameLayout.LayoutParams(dp(108),dp(108),Gravity.TOP or Gravity.END).apply{rightMargin=dp(12);topMargin=dp(28)})
         }
         setContentView(root);refreshMainState()
     }
@@ -226,7 +226,7 @@ class MainActivity : Activity() {
         try{startActivity(Intent(Intent.ACTION_VIEW,Uri.parse("https://buymeacoffee.com/jcrw")))}
         catch(_:android.content.ActivityNotFoundException){Toast.makeText(this,tx("Bağlantıyı açacak tarayıcı bulunamadı","No browser is available to open the link"),Toast.LENGTH_LONG).show()}
     }
-    private fun showUsagePrivacy(){AlertDialog.Builder(this).setTitle(tx("Nasıl çalışır?","How it works")).setMessage(tx("Ekran yakalama izni verdikten sonra Remote Play veya Chiaki'ye dönün. Jcrw seçtiğiniz altyazı alanını cihazda OCR ile okur. Yalnızca OCR metni seçtiğiniz çeviri sağlayıcısına gönderilir; görüntü gönderilmez. Diğer uygulamaların üstünde gösterim izni gerekir. Ekran yakalama sırasında PlayStation ve çevrimiçi hizmetlerin gizlilik koşullarını kontrol edin.","After granting screen-capture permission, return to Remote Play or Chiaki. Jcrw reads only the selected subtitle area on-device. Only OCR text—not images—is sent to the selected translation provider. Overlay permission is also required. Check the privacy terms of PlayStation and any online provider you use.")).setPositiveButton(tx("Tamam","OK"),null).show()}
+    private fun showUsagePrivacy(){AlertDialog.Builder(this).setTitle(tx("Nasıl çalışır?","How it works")).setMessage(tx("Jcrw Çeviri yalnızca oyunlarda değil; film, dizi veya Android ekranında görünen başka videolarda da kullanılabilir. Ekran yakalama izni verin, çevireceğiniz uygulamaya dönün ve altyazı alanını seçin. Jcrw seçilen alanı cihazda OCR ile okur; yalnızca tanınan metin seçtiğiniz çeviri sağlayıcısına gönderilir, ekran görüntüsü gönderilmez. Çeviriyi ekranda göstermek için diğer uygulamaların üzerinde gösterim izni gerekir. DRM veya FLAG_SECURE kullanan uygulamalar ekranı yakalamayı engelleyebilir. TV'nin HDMI giriş görüntüsü okunamaz.","Jcrw Translator can be used with games, films, TV shows, or other video visible on the Android screen. Grant screen-capture permission, return to the app you want to translate, and choose the subtitle area. Jcrw runs OCR on that selected area on the device; only recognized text—not screenshots—is sent to your chosen translation provider. Overlay permission is needed to show translated captions. DRM or FLAG_SECURE apps may block screen capture. HDMI input cannot be captured.")).setPositiveButton(tx("Tamam","OK"),null).show()}
     private fun serviceIsRunning():Boolean = try{(getSystemService(ACTIVITY_SERVICE) as android.app.ActivityManager).getRunningServices(Int.MAX_VALUE).any{it.service.className==TranslatorService::class.java.name}}catch(_:Exception){false}
     private fun refreshMainState(){if(!::status.isInitialized)return;val age=android.os.SystemClock.elapsedRealtime()-p.captureHeartbeat;val running=serviceIsRunning()||(p.captureRunning&&age in 0..10000L);if(!running&&p.captureRunning){p.captureRunning=false;p.captureHeartbeat=0L;p.captureStatus=tx("Çeviri durduruldu","Translation stopped")};p.captureRunning=running;status.text=if(running)p.captureStatus else if(p.translationProvider!="libretranslate"&&p.translationApiKey.isBlank())tx("Hazır • API anahtarı girin veya Ayarlar’dan ücretsiz çeviri motoru seçin","Ready • Enter an API key or select a free translation engine in Settings") else tx("Hazır • Çeviriyi başlatabilirsiniz","Ready • You can start translation");primaryButton?.text=if(running)tx("ÇEVİRİYİ DURDUR","STOP TRANSLATION") else tx("ÇEVİRİYİ BAŞLAT","START TRANSLATION");primaryButton?.background=buttonBackground(running)}
     private fun toggleTranslation(){if(serviceIsRunning()||p.captureRunning){p.captureRunning=false;p.captureStatus=tx("Çeviri durduruldu","Translation stopped");startService(Intent(this,TranslatorService::class.java).setAction(TranslatorService.ACTION_STOP));status.text=p.captureStatus;primaryButton?.text=tx("ÇEVİRİYİ BAŞLAT","START TRANSLATION");primaryButton?.background=buttonBackground(false);mainHandler.postDelayed({refreshMainState()},600L)}else beginStart()}

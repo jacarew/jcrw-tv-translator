@@ -13,7 +13,7 @@ Chiaki is an open-source client for PlayStation Remote Play. The game runs on th
 
 ## 2. Jcrw Translator — separate, optional companion
 
-Install Translator only if you want OCR translation, an on-screen subtitle overlay, or speech. It captures a selected area of the Android screen and can work alongside Chiaki or another compatible Remote Play app. It does not stream or control the PS5, and it cannot read protected HDMI video.
+Install Translator only if you want OCR translation, an on-screen subtitle overlay, or speech. It can be used during games, films, TV shows, and other video apps whenever Android allows screen capture. It captures a selected area of the Android screen and can work alongside Chiaki or another compatible app. It does not stream or control the PS5, and it cannot read HDMI input or protected video surfaces.
 
 ## İndirme ve kurulum — uygulamalar ayrı
 
