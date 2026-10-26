@@ -15,7 +15,7 @@ class CompanionPreferences(context: Context) {
     private val prefs = PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
     var ocrEngine: String get() = prefs.getString("ocr_engine", "mlkit") ?: "mlkit"; set(v) = prefs.edit().putString("ocr_engine", v).apply()
     var ocrWidth: Int get() = prefs.getInt("ocr_width", 320).coerceIn(96, 720); set(v) = prefs.edit().putInt("ocr_width", v.coerceIn(96, 720)).apply()
-    var scanIntervalMs: Int get() = prefs.getInt("ocr_scan_interval_ms", 1500).coerceIn(750, 5000); set(v) = prefs.edit().putInt("ocr_scan_interval_ms",v.coerceIn(750,5000)).apply()
+    var scanIntervalMs: Int get() = prefs.getInt("ocr_scan_interval_ms", 1500).coerceIn(500, 5000); set(v) = prefs.edit().putInt("ocr_scan_interval_ms",v.coerceIn(500,5000)).apply()
     var performanceProfileApplied: Boolean get() = prefs.getBoolean("performance_profile_v1",false); set(v) = prefs.edit().putBoolean("performance_profile_v1",v).apply()
     var translationProvider: String get() = prefs.getString("translation_provider", "mymemory") ?: "mymemory"; set(v) = prefs.edit().putString("translation_provider", v).apply()
     var translationEndpoint: String get() = prefs.getString("translation_endpoint", "https://libretranslate.com/translate") ?: "https://libretranslate.com/translate"; set(v) = prefs.edit().putString("translation_endpoint", v).apply()

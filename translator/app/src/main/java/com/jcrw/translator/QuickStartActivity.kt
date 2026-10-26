@@ -33,7 +33,13 @@ class QuickStartActivity : Activity() {
             return
         }
         if (prefs.captureRunning) {
-            finish()
+            finishAndRestoreQuickMenu()
+            return
+        }
+        if (TranslatorService.projectionSessionAvailable) {
+            prefs.captureRunning = true
+            startService(Intent(this, TranslatorService::class.java).setAction(TranslatorService.ACTION_RESUME))
+            finishAndRestoreQuickMenu()
             return
         }
         if (!Settings.canDrawOverlays(this)) {
@@ -44,7 +50,7 @@ class QuickStartActivity : Activity() {
                 )
             } catch (_: Exception) {
                 toast(tx("Diğer uygulamaların üzerinde gösterim izni gerekli.", "Display-over-other-apps permission is required."))
-                finish()
+                finishAndRestoreQuickMenu()
             }
             return
         }
@@ -52,8 +58,13 @@ class QuickStartActivity : Activity() {
     }
 
     private fun requestCaptureConsent() {
-        val manager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-        startActivityForResult(manager.createScreenCaptureIntent(), captureRequest)
+        try {
+            val manager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+            startActivityForResult(manager.createScreenCaptureIntent(), captureRequest)
+        } catch (_: Exception) {
+            toast(tx("Ekran yakalama izni açılamadı.", "Could not open screen-capture permission."))
+            finishAndRestoreQuickMenu()
+        }
     }
 
     @Deprecated("Required for Android TV MediaProjection consent flow")
@@ -64,7 +75,7 @@ class QuickStartActivity : Activity() {
                 if (Settings.canDrawOverlays(this)) requestCaptureConsent()
                 else {
                     toast(tx("İzin verilmedi; çeviri başlatılmadı.", "Permission was not granted; translation did not start."))
-                    finish()
+                    finishAndRestoreQuickMenu()
                 }
             }
             captureRequest -> {
@@ -83,10 +94,15 @@ class QuickStartActivity : Activity() {
                 } else {
                     toast(tx("Ekran yakalama izni verilmedi.", "Screen-capture permission was not granted."))
                 }
-                finish()
+                finishAndRestoreQuickMenu()
             }
-            else -> finish()
+            else -> finishAndRestoreQuickMenu()
         }
+    }
+
+    private fun finishAndRestoreQuickMenu() {
+        QuickMenuAccessibilityService.restorePanelAfterStart()
+        finish()
     }
 
     private fun tx(tr: String, en: String) = if (prefs.uiLanguage == "en") en else tr

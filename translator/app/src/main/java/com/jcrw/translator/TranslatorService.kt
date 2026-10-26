@@ -40,8 +40,11 @@ import java.util.concurrent.Executors
 
 class TranslatorService:Service() {
     companion object {
-        const val ACTION_START="com.jcrw.translator.START"; const val ACTION_STOP="com.jcrw.translator.STOP"; const val ACTION_SPEECH_STOP="com.jcrw.translator.SPEECH_STOP"
+        const val ACTION_START="com.jcrw.translator.START"; const val ACTION_STOP="com.jcrw.translator.STOP"; const val ACTION_PAUSE="com.jcrw.translator.PAUSE"; const val ACTION_RESUME="com.jcrw.translator.RESUME"; const val ACTION_SPEECH_STOP="com.jcrw.translator.SPEECH_STOP"
         const val EXTRA_RESULT_CODE="result_code"; const val EXTRA_DATA="projection_data"; private const val CHANNEL="jcrw_capture";private const val NOTIFICATION_ID=6231
+        @Volatile var projectionSessionAvailable = false
+            private set
+        private fun markProjectionSession(available: Boolean) { projectionSessionAvailable = available }
     }
     private lateinit var prefs:CompanionPreferences
     private lateinit var wm:WindowManager
@@ -56,6 +59,7 @@ class TranslatorService:Service() {
     private var tesseract:TessBaseAPI?=null
     private var sampleBusy=false
     private var stopped=false
+    @Volatile private var paused=false
     private var latestSignature:IntArray?=null
     private var lastOcrAt=0L
     private val recentOcrTexts=ArrayDeque<Pair<String,Long>>()
@@ -71,9 +75,12 @@ class TranslatorService:Service() {
 
     override fun onCreate(){super.onCreate();prefs=CompanionPreferences(this);wm=getSystemService(WINDOW_SERVICE) as WindowManager;thread=HandlerThread("jcrw-screen-ocr").apply{start()};worker=Handler(thread.looper);tts=TextToSpeech(this){status->if(status==TextToSpeech.SUCCESS){ttsReady=true;tts?.setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build());applyLocalVoice();speakNext()}};createChannel()}
     override fun onStartCommand(intent:Intent?,flags:Int,startId:Int):Int {
-        if(intent?.action==ACTION_STOP){prefs.captureRunning=false;prefs.captureHeartbeat=0L;prefs.captureStatus="Çeviri durduruldu";stopSelf();return START_NOT_STICKY}
+        if(intent?.action==ACTION_STOP){prefs.captureRunning=false;prefs.captureHeartbeat=0L;prefs.captureStatus="Çeviri durduruldu";markProjectionSession(false);stopSelf();return START_NOT_STICKY}
+        if(intent?.action==ACTION_PAUSE){pauseCapture();return START_STICKY}
+        if(intent?.action==ACTION_RESUME){if(projection!=null)resumeCapture();return START_STICKY}
         if(intent?.action==ACTION_SPEECH_STOP){synchronized(speechQueue){speechQueue.clear()};tts?.stop();speechBusy=false;player?.let{try{it.stop()}catch(_:Exception){};it.release()};player=null;return START_NOT_STICKY}
         if(intent?.action==ACTION_START && projection==null){startNotice();startCapture(intent)}
+        else if(intent?.action==ACTION_START && projection!=null)resumeCapture()
         else if(intent==null&&projection==null){prefs.captureRunning=false;stopSelf();return START_NOT_STICKY}
         return START_STICKY
     }
@@ -106,18 +113,20 @@ class TranslatorService:Service() {
         val code=intent.getIntExtra(EXTRA_RESULT_CODE,Activity.RESULT_CANCELED);if(data==null||code!=Activity.RESULT_OK)throw IllegalStateException("Ekran yakalama izni alınamadı")
         val manager=getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         projection=manager.getMediaProjection(code,data)?:throw IllegalStateException("Ekran yakalama başlatılamadı")
-        projectionCallback=object:MediaProjection.Callback(){override fun onStop(){prefs.captureRunning=false;prefs.captureHeartbeat=0L;prefs.captureStatus="Ekran yakalama durdu";stopSelf()}}
+        projectionCallback=object:MediaProjection.Callback(){override fun onStop(){prefs.captureRunning=false;prefs.captureHeartbeat=0L;prefs.captureStatus="Ekran yakalama durdu";markProjectionSession(false);stopSelf()}}
         projection!!.registerCallback(projectionCallback!!,main)
         val metrics=DisplayMetrics();@Suppress("DEPRECATION") wm.defaultDisplay.getRealMetrics(metrics)
         val w=minOf(metrics.widthPixels,prefs.ocrWidth).coerceAtLeast(96);val h=(metrics.heightPixels.toFloat()*w/metrics.widthPixels).toInt().coerceAtLeast(54)
         reader=ImageReader.newInstance(w,h,PixelFormat.RGBA_8888,2).also{r->r.setOnImageAvailableListener(::onImage,worker)}
         display=projection!!.createVirtualDisplay("Jcrw screen capture",w,h,metrics.densityDpi,DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,reader!!.surface,null,worker)
+        paused=false
+        markProjectionSession(true)
         prefs.captureRunning=true
         prefs.captureHeartbeat=android.os.SystemClock.elapsedRealtime()
         updateStatus("Ekran yakalama ve OCR etkin • altyazı bekleniyor")
         main.post{showOverlay()}
     }catch(e:Exception){prefs.captureRunning=false;val message="Ekran yakalama açılamadı: ${e.message?:"hata"}";prefs.captureStatus=message;updateStatus(message);showTopError(message);stopSelf()}}
-    private fun onImage(src:ImageReader){val img=try{src.acquireLatestImage()}catch(_:Exception){null}?:return;prefs.captureHeartbeat=android.os.SystemClock.elapsedRealtime();if(sampleBusy||stopped){img.close();return};sampleBusy=true;display?.setSurface(null)
+    private fun onImage(src:ImageReader){val img=try{src.acquireLatestImage()}catch(_:Exception){null}?:return;prefs.captureHeartbeat=android.os.SystemClock.elapsedRealtime();if(sampleBusy||stopped||paused){img.close();return};sampleBusy=true;display?.setSurface(null)
         val bmp=try{val pl=img.planes[0];val stride=pl.pixelStride;val padded=pl.rowStride/stride;Bitmap.createBitmap(padded,img.height,Bitmap.Config.ARGB_8888).also{pl.buffer.rewind();it.copyPixelsFromBuffer(pl.buffer)}}catch(_:Exception){null}finally{img.close()}
         if(bmp==null){resume();return}
         // Row stride can pad the bitmap. Crop against the actual virtual-display width,
@@ -162,7 +171,31 @@ class TranslatorService:Service() {
     }.joinToString("\n")
     private fun isRecentDuplicate(text:String):Boolean{val now=android.os.SystemClock.elapsedRealtime();while(recentOcrTexts.isNotEmpty()&&now-recentOcrTexts.first().second>90000L)recentOcrTexts.removeFirst();if(recentOcrTexts.any{similar(text,it.first)>=.8})return true;recentOcrTexts.addLast(text to now);while(recentOcrTexts.size>40)recentOcrTexts.removeFirst();return false}
     private fun similar(a:String,b:String):Double{if(a.isBlank()||b.isBlank())return 0.0;val x=a.lowercase().replace(Regex("[^\\p{L}\\p{N}]+")," ").trim();val y=b.lowercase().replace(Regex("[^\\p{L}\\p{N}]+")," ").trim();if(x.isBlank()||y.isBlank())return 0.0;var p=IntArray(y.length+1){it};for(i in x.indices){val c=IntArray(y.length+1);c[0]=i+1;for(j in y.indices)c[j+1]=minOf(c[j]+1,p[j+1]+1,p[j]+if(x[i]==y[j])0 else 1);p=c};return 1.0-p[y.length].toDouble()/maxOf(x.length,y.length)}
-    private fun resume(){sampleBusy=false;worker.postDelayed({if(!stopped)display?.setSurface(reader?.surface)},prefs.scanIntervalMs.toLong())}
+    private fun resume(){sampleBusy=false;worker.postDelayed({if(!stopped&&!paused)display?.setSurface(reader?.surface)},prefs.scanIntervalMs.toLong())}
+    private fun pauseCapture(){
+        if(projection==null){prefs.captureRunning=false;return}
+        paused=true
+        prefs.captureRunning=false
+        prefs.captureStatus="Çeviri durduruldu"
+        display?.setSurface(null)
+        main.removeCallbacks(clearCaption)
+        try{overlay?.let{wm.removeView(it)}}catch(_:Exception){}
+        overlay=null
+        synchronized(speechQueue){speechQueue.clear()}
+        tts?.stop();speechBusy=false
+        try{player?.stop()}catch(_:Exception){};player?.release();player=null
+        updateStatus("Çeviri duraklatıldı • oturum hazır")
+    }
+    private fun resumeCapture(){
+        if(projection==null||!paused)return
+        paused=false
+        prefs.captureRunning=true
+        prefs.captureHeartbeat=android.os.SystemClock.elapsedRealtime()
+        prefs.captureStatus="Ekran yakalama ve OCR etkin • altyazı bekleniyor"
+        display?.setSurface(reader?.surface)
+        updateStatus(prefs.captureStatus)
+        main.post{showOverlay()}
+    }
     private fun initTesseract():TessBaseAPI{val base=File(filesDir,"tesseract");val dir=File(base,"tessdata");val model=File(dir,"eng.traineddata");if(!model.exists()){dir.mkdirs();val c=URL("https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata").openConnection() as HttpURLConnection;c.connectTimeout=15000;c.readTimeout=30000;try{c.inputStream.use{input->model.outputStream().use{input.copyTo(it)}}}finally{c.disconnect()}};return TessBaseAPI().also{if(!it.init(base.absolutePath,"eng")){it.recycle();throw IllegalStateException("İngilizce OCR modeli yüklenemedi")}}}
     private fun showOverlay(){if(overlay!=null)return;val v=TextView(this).apply{gravity=Gravity.CENTER;setPadding(22,10,22,10);visibility=android.view.View.GONE;isFocusable=false;maxWidth=(resources.displayMetrics.widthPixels*.9f).toInt()}
         val m=DisplayMetrics();@Suppress("DEPRECATION") wm.defaultDisplay.getRealMetrics(m)
@@ -180,5 +213,5 @@ class TranslatorService:Service() {
     private fun localSpeak(text:String){if(!ttsReady){speechBusy=false;return};applyLocalVoice();tts?.setOnUtteranceProgressListener(object:android.speech.tts.UtteranceProgressListener(){override fun onStart(id:String?){};override fun onDone(id:String?){speechBusy=false;speakNext()};override fun onError(id:String?){speechBusy=false;speakNext()}});tts?.setPitch(if(prefs.speechGender=="male").92f else 1.08f);tts?.speak(text,TextToSpeech.QUEUE_FLUSH,null,"jcrw-${System.nanoTime()}")}
     private fun playSpeechFile(file:File){try{player?.release();player=MediaPlayer().apply{setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build());setVolume(prefs.speechVolume/100f,prefs.speechVolume/100f);setDataSource(file.absolutePath);setOnCompletionListener{release();player=null;file.delete();speechBusy=false;speakNext()};setOnErrorListener{p,_,_->p.release();player=null;file.delete();speechBusy=false;speakNext();true};prepare();start()}}catch(_:Exception){file.delete();speechBusy=false;speakNext()}}
     override fun onBind(intent:Intent?):IBinder?=null
-    override fun onDestroy(){prefs.captureRunning=false;prefs.captureHeartbeat=0L;stopped=true;main.removeCallbacksAndMessages(null);worker.removeCallbacksAndMessages(null);display?.release();display=null;reader?.setOnImageAvailableListener(null,null);reader?.close();reader=null;projectionCallback?.let{projection?.unregisterCallback(it)};projection?.stop();projection=null;try{overlay?.let{wm.removeView(it)}}catch(_:Exception){};overlay=null;recognizer?.close();tesseract?.recycle();tts?.stop();tts?.shutdown();player?.release();thread.quitSafely();speechExecutor.shutdownNow();super.onDestroy()}
+    override fun onDestroy(){prefs.captureRunning=false;prefs.captureHeartbeat=0L;markProjectionSession(false);stopped=true;main.removeCallbacksAndMessages(null);worker.removeCallbacksAndMessages(null);display?.release();display=null;reader?.setOnImageAvailableListener(null,null);reader?.close();reader=null;projectionCallback?.let{projection?.unregisterCallback(it)};projection?.stop();projection=null;try{overlay?.let{wm.removeView(it)}}catch(_:Exception){};overlay=null;recognizer?.close();tesseract?.recycle();tts?.stop();tts?.shutdown();player?.release();thread.quitSafely();speechExecutor.shutdownNow();super.onDestroy()}
 }

@@ -13,9 +13,9 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".QuickStartActivity" android:exported="false" android:excludeFromRecents="true" android:noHistory="true" android:theme="@style/QuickStartTheme" />
-        <activity android:name=".RegionSelectionActivity" android:exported="false" android:theme="@style/RegionTheme" android:screenOrientation="landscape" />
-        <activity android:name=".CaptionPositionActivity" android:exported="false" android:theme="@style/RegionTheme" android:screenOrientation="landscape" />
+        <activity android:name=".QuickStartActivity" android:exported="false" android:excludeFromRecents="true" android:noHistory="true" android:taskAffinity="com.jcrw.translator.tv.quickmenu" android:theme="@style/QuickStartTheme" />
+        <activity android:name=".RegionSelectionActivity" android:exported="false" android:excludeFromRecents="true" android:taskAffinity="com.jcrw.translator.tv.quickmenu" android:theme="@style/RegionTheme" android:screenOrientation="landscape" />
+        <activity android:name=".CaptionPositionActivity" android:exported="false" android:excludeFromRecents="true" android:taskAffinity="com.jcrw.translator.tv.quickmenu" android:theme="@style/RegionTheme" android:screenOrientation="landscape" />
         <service android:name=".TranslatorService" android:exported="false" android:foregroundServiceType="mediaProjection" />
         <service android:name=".QuickMenuAccessibilityService" android:label="@string/quick_menu_accessibility_label" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" android:exported="true">
             <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
