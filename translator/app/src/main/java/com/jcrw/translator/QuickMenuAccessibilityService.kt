@@ -146,9 +146,7 @@ class QuickMenuAccessibilityService : AccessibilityService() {
             prefs.captureStatus = "Çeviri durduruldu"
             startService(Intent(this, TranslatorService::class.java).setAction(TranslatorService.ACTION_STOP))
         } else {
-            val i = Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            i.putExtra(MainActivity.EXTRA_QUICK_START, true)
-            startActivity(i)
+            startActivity(Intent(this, QuickStartActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION))
         }
         hidePanel()
     }
