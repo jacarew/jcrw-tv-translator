@@ -17,8 +17,9 @@ class CompanionPreferences(context: Context) {
     var ocrWidth: Int get() = prefs.getInt("ocr_width", 320).coerceIn(96, 720); set(v) = prefs.edit().putInt("ocr_width", v.coerceIn(96, 720)).apply()
     var scanIntervalMs: Int get() = prefs.getInt("ocr_scan_interval_ms", 1500).coerceIn(750, 5000); set(v) = prefs.edit().putInt("ocr_scan_interval_ms",v.coerceIn(750,5000)).apply()
     var performanceProfileApplied: Boolean get() = prefs.getBoolean("performance_profile_v1",false); set(v) = prefs.edit().putBoolean("performance_profile_v1",v).apply()
-    var translationProvider: String get() = prefs.getString("translation_provider", "deepl") ?: "deepl"; set(v) = prefs.edit().putString("translation_provider", v).apply()
+    var translationProvider: String get() = prefs.getString("translation_provider", "mymemory") ?: "mymemory"; set(v) = prefs.edit().putString("translation_provider", v).apply()
     var translationEndpoint: String get() = prefs.getString("translation_endpoint", "https://libretranslate.com/translate") ?: "https://libretranslate.com/translate"; set(v) = prefs.edit().putString("translation_endpoint", v).apply()
+    val translationNeedsApiKey: Boolean get() = translationProvider in listOf("deepl", "openai", "gemini") || (translationProvider == "libretranslate" && translationEndpoint.contains("libretranslate.com", ignoreCase = true))
     var subtitleSourceLanguage: String get() = prefs.getString("source_language", "en") ?: "en"; set(v) = prefs.edit().putString("source_language", v).apply()
     var subtitleTargetLanguage: String get() = prefs.getString("target_language", "tr") ?: "tr"; set(v) = prefs.edit().putString("target_language", v).apply()
     var subtitleRegion: RectF

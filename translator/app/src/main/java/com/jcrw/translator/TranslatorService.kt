@@ -135,8 +135,8 @@ class TranslatorService:Service() {
     }
     private fun signature(b:Bitmap):IntArray{val out=IntArray(24*10);var n=0;for(y in 0 until 10)for(x in 0 until 24){val px=((x+.5f)*b.width/24).toInt().coerceIn(0,b.width-1);val py=((y+.5f)*b.height/10).toInt().coerceIn(0,b.height-1);val c=b.getPixel(px,py);out[n++]=(((c shr 16 and 255)*299+(c shr 8 and 255)*587+(c and 255)*114)/1000)};return out}
     private fun handleText(raw:String){val text=dialogueOnly(raw);if(text.isBlank())return;if(isRecentDuplicate(text))return
-        if(prefs.translationProvider!="libretranslate"&&prefs.translationApiKey.isBlank()){
-            val message="OCR yazıyı algıladı; ${prefs.translationProvider.uppercase()} API anahtarı eksik. Jcrw Ayarları'ndan ekle."
+        if(prefs.translationNeedsApiKey&&prefs.translationApiKey.isBlank()){
+            val message="OCR yazıyı algıladı; ${prefs.translationProvider.uppercase()} API anahtarı eksik. Ayarlardan anahtar ekleyin veya ücretsiz MyMemory motorunu seçin."
             updateStatus(message);showTopError(message);return
         }
         updateStatus("OCR yazıyı algıladı • çeviri yapılıyor")

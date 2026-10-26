@@ -153,8 +153,8 @@ class QuickMenuAccessibilityService : AccessibilityService() {
 
     private fun launchRegionPicker() { hidePanel(); startActivity(Intent(this, RegionSelectionActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
     private fun launchCaptionPositionPicker() { hidePanel(); startActivity(Intent(this, CaptionPositionActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-    private fun cycleProvider() { val options = listOf("deepl", "openai", "gemini", "libretranslate"); prefs.translationProvider = options[(options.indexOf(prefs.translationProvider).coerceAtLeast(0) + 1) % options.size] }
-    private fun providerName() = when (prefs.translationProvider) { "deepl" -> "DeepL"; "openai" -> "OpenAI"; "gemini" -> "Gemini"; else -> "LibreTranslate" }
+    private fun cycleProvider() { val options = listOf("mymemory", "deepl", "openai", "gemini", "libretranslate"); prefs.translationProvider = options[(options.indexOf(prefs.translationProvider).coerceAtLeast(0) + 1) % options.size] }
+    private fun providerName() = when (prefs.translationProvider) { "mymemory" -> "MyMemory • Free"; "deepl" -> "DeepL"; "openai" -> "OpenAI"; "gemini" -> "Gemini"; else -> "LibreTranslate" }
     private fun positionName() = when { prefs.overlayY < .3f -> "Üst"; prefs.overlayY < .62f -> "Orta"; else -> "Alt" }
     private fun hidePanel() { try { panel?.let { wm.removeView(it) } } catch (_: Exception) {}; panel = null }
     override fun onDestroy() { hidePanel(); super.onDestroy() }

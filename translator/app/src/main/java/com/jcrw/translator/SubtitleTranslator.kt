@@ -61,6 +61,7 @@ class SubtitleTranslator(private val preferences: CompanionPreferences)
 	{
 		return when(preferences.translationProvider)
 		{
+			"mymemory" -> networkTranslation { translateWithMyMemory(input, sourceLanguage) }
 			"openai" -> networkTranslation { translateWithOpenAi(input) }
 			"gemini" -> networkTranslation { translateWithGemini(input) }
 			"deepl" -> networkTranslation { translateWithDeepL(input) }
@@ -122,6 +123,41 @@ class SubtitleTranslator(private val preferences: CompanionPreferences)
 		if(key.isNotEmpty()) body.put("api_key", key)
 		val response = request(preferences.translationEndpoint.trim(), null, body.toString(), "application/json")
 		return JSONObject(response).getString("translatedText")
+	}
+
+	private fun translateWithMyMemory(text: String, sourceLanguage: String): String
+	{
+		val source = when(sourceLanguage.trim().lowercase()) { "", "auto", "autodetect" -> "autodetect"; else -> sourceLanguage.trim().lowercase() }
+		val target = preferences.subtitleTargetLanguage.trim().lowercase()
+		val output = text.lines().map { line ->
+			if(line.isBlank()) return@map line
+			if(line.toByteArray(Charsets.UTF_8).size > 500) {
+				throw IllegalArgumentException("MyMemory ücretsiz servisi satır başına en fazla 500 bayt kabul ediyor. Daha kısa altyazı alanı seçin veya başka bir motor kullanın.")
+			}
+			val url = "https://api.mymemory.translated.net/get?q=${form(line)}&langpair=${form("$source|$target")}&mt=1"
+			val connection = (URL(url).openConnection() as HttpURLConnection).apply {
+				requestMethod = "GET"
+				connectTimeout = 8000
+				readTimeout = 12000
+				setRequestProperty("Accept", "application/json")
+				setRequestProperty("User-Agent", "Jcrw-Translator-Android-TV")
+			}
+			try {
+				val code = connection.responseCode
+				val stream = if(code in 200..299) connection.inputStream else connection.errorStream
+				val response = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
+				val root = JSONObject(response)
+				if(code !in 200..299 || root.optInt("responseStatus", code) != 200) {
+					throw IllegalStateException(root.optString("responseDetails").ifBlank { "MyMemory isteği başarısız oldu (HTTP $code)." })
+				}
+				root.optJSONObject("responseData")?.optString("translatedText")
+					?.takeIf { it.isNotBlank() }
+					?: throw IllegalStateException("MyMemory yanıtında çeviri bulunamadı.")
+			} finally {
+				connection.disconnect()
+			}
+		}
+		return output.joinToString("\n")
 	}
 
 	private fun deepLTargetCode(): String = when(preferences.subtitleTargetLanguage.lowercase())
