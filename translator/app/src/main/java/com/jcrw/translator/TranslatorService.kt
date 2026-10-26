@@ -81,7 +81,7 @@ class TranslatorService:Service() {
         val openIntent=Intent(this,MainActivity::class.java).apply{flags=Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP}
         val openPending=PendingIntent.getActivity(this,0,openIntent,PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val stopIntent=PendingIntent.getService(this,1,Intent(this,TranslatorService::class.java).setAction(ACTION_STOP),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        val n=Notification.Builder(this,CHANNEL).setSmallIcon(android.R.drawable.ic_menu_view).setContentTitle("Jcrw • Altyazı çevirisi").setContentText(message).setContentIntent(openPending).addAction(android.R.drawable.ic_media_pause,"Çeviriyi durdur",stopIntent).setOngoing(true).build()
+        val n=notificationBuilder().setSmallIcon(android.R.drawable.ic_menu_view).setContentTitle("Jcrw • Altyazı çevirisi").setContentText(message).setContentIntent(openPending).addAction(android.R.drawable.ic_media_pause,"Çeviriyi durdur",stopIntent).setOngoing(true).build()
         if(Build.VERSION.SDK_INT>=29)startForeground(NOTIFICATION_ID,n,ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION) else startForeground(NOTIFICATION_ID,n)
     }
     private fun updateStatus(message:String){
@@ -90,7 +90,7 @@ class TranslatorService:Service() {
         val openIntent=Intent(this,MainActivity::class.java).apply{flags=Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP}
         val openPending=PendingIntent.getActivity(this,0,openIntent,PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val stopIntent=PendingIntent.getService(this,1,Intent(this,TranslatorService::class.java).setAction(ACTION_STOP),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        val n=Notification.Builder(this,CHANNEL).setSmallIcon(android.R.drawable.ic_menu_view).setContentTitle("Jcrw • Altyazı çevirisi").setContentText(message).setContentIntent(openPending).addAction(android.R.drawable.ic_media_pause,"Çeviriyi durdur",stopIntent).setOngoing(true).build()
+        val n=notificationBuilder().setSmallIcon(android.R.drawable.ic_menu_view).setContentTitle("Jcrw • Altyazı çevirisi").setContentText(message).setContentIntent(openPending).addAction(android.R.drawable.ic_media_pause,"Çeviriyi durdur",stopIntent).setOngoing(true).build()
         (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIFICATION_ID,n)
     }
     private fun showTopError(message:String){
@@ -100,6 +100,7 @@ class TranslatorService:Service() {
         main.post{android.widget.Toast.makeText(this,message,android.widget.Toast.LENGTH_LONG).apply{setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL,0,(24*resources.displayMetrics.density).toInt());show()}}
     }
     private fun createChannel(){if(Build.VERSION.SDK_INT>=26){val ch=NotificationChannel(CHANNEL,"Ekran çevirisi",NotificationManager.IMPORTANCE_LOW);(getSystemService(NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(ch)}}
+    private fun notificationBuilder() = if(Build.VERSION.SDK_INT>=26) Notification.Builder(this,CHANNEL) else Notification.Builder(this)
     private fun startCapture(intent:Intent){try{
         val data=if(Build.VERSION.SDK_INT>=33)intent.getParcelableExtra(EXTRA_DATA,Intent::class.java) else @Suppress("DEPRECATION") intent.getParcelableExtra(EXTRA_DATA) as? Intent
         val code=intent.getIntExtra(EXTRA_RESULT_CODE,Activity.RESULT_CANCELED);if(data==null||code!=Activity.RESULT_OK)throw IllegalStateException("Ekran yakalama izni alınamadı")
@@ -123,7 +124,7 @@ class TranslatorService:Service() {
         // otherwise the saved normalized area drifts horizontally on padded images.
         val actual=try{if(bmp.width==reader?.width)bmp else Bitmap.createBitmap(bmp,0,0,reader?.width?:bmp.width,bmp.height)}catch(_:Exception){bmp}
         if(actual!==bmp)bmp.recycle()
-        val r=prefs.subtitleRegion;val left=(r.left*actual.width).toInt().coerceIn(0,actual.width-1);val top=(r.top*actual.height).toInt().coerceIn(0,actual.height-1);val right=(r.right*actual.width).toInt().coerceIn(left+1,actual.width);val bottom=(r.bottom*actual.height).toInt().coerceIn(top+1,actual.height);val crop=try{Bitmap.createBitmap(actual,left,top,right-left,bottom-top)}catch(_:Exception){null};actual.recycle();if(crop==null){resume();return}
+        val r=prefs.subtitleRegion;val left=(r.left*actual.width).toInt().coerceIn(0,actual.width-1);val top=(r.top*actual.height).toInt().coerceIn(0,actual.height-1);val right=(r.right*actual.width).toInt().coerceIn(left+1,actual.width);val bottom=(r.bottom*actual.height).toInt().coerceIn(top+1,actual.height);val crop=try{Bitmap.createBitmap(actual,left,top,right-left,bottom-top)}catch(_:Exception){null};if(crop!==actual)actual.recycle();if(crop==null){resume();return}
         val sig=signature(crop);val now=android.os.SystemClock.elapsedRealtime();val prev=latestSignature;val changed=prev==null||prev.size!=sig.size||sig.indices.sumOf{ kotlin.math.abs(sig[it]-prev[it]) }/sig.size>=8
         if(!changed&&now-lastOcrAt<5000){crop.recycle();resume();return};latestSignature=sig;lastOcrAt=now
         if(prefs.ocrEngine=="mlkit"){
@@ -167,7 +168,7 @@ class TranslatorService:Service() {
         val m=DisplayMetrics();@Suppress("DEPRECATION") wm.defaultDisplay.getRealMetrics(m)
         val type=if(Build.VERSION.SDK_INT>=26)WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE
         val lp=WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.WRAP_CONTENT,type,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT).apply{gravity=Gravity.TOP or Gravity.LEFT;x=(m.widthPixels*prefs.overlayX).toInt();y=(m.heightPixels*prefs.overlayY).toInt()}
-        try{wm.addView(v,lp);overlay=v}catch(_:Exception){}
+        try{wm.addView(v,lp);overlay=v}catch(e:Exception){showTopError("Altyazı katmanı açılamadı: ${e.localizedMessage?:"ekran üstü iznini kontrol edin"}")}
     }
     private fun showText(text:String){val v=overlay?:return;v.text=text;v.setTextColor(prefs.captionTextColor);v.textSize=prefs.captionTextSize.toFloat();v.typeface=Typeface.create(prefs.captionFont,Typeface.BOLD);v.background=GradientDrawable().apply{setColor(prefs.captionBackgroundColor);cornerRadius=16f};v.visibility=android.view.View.VISIBLE;v.post{val lp=v.layoutParams as? WindowManager.LayoutParams?:return@post;val m=DisplayMetrics();@Suppress("DEPRECATION") wm.defaultDisplay.getRealMetrics(m);lp.x=(m.widthPixels*prefs.overlayX-v.width/2).toInt().coerceIn(0,(m.widthPixels-v.width).coerceAtLeast(0));lp.y=(m.heightPixels*prefs.overlayY-v.height/2).toInt().coerceIn(0,(m.heightPixels-v.height).coerceAtLeast(0));try{wm.updateViewLayout(v,lp)}catch(_:Exception){}};main.removeCallbacks(clearCaption);main.postDelayed(clearCaption,5000)}
     private val clearCaption=Runnable{overlay?.apply{text="";visibility=android.view.View.GONE}}

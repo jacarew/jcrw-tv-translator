@@ -8,7 +8,7 @@ import android.view.View
 
 /** Small, bundled coffee-support animation shown only when the user opens support info. */
 class CoffeeSupportGifView(context: Context) : View(context) {
-    private val movie = context.resources.openRawResource(R.drawable.coffee_support).use { Movie.decodeStream(it) }
+    private val movie = context.resources.openRawResource(R.raw.coffee_support).use { Movie.decodeStream(it) }
     private val startedAt = SystemClock.uptimeMillis()
 
     override fun onDraw(canvas: Canvas) {

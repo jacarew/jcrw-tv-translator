@@ -50,6 +50,7 @@ class CaptionPositionActivity : Activity() {
             textAlign = Paint.Align.CENTER
         }
         private val hint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; textSize = 24f; setShadowLayer(4f, 1f, 1f, Color.BLACK) }
+        private val captionBounds = RectF()
 
         override fun onDraw(c: Canvas) {
             super.onDraw(c)
@@ -59,8 +60,8 @@ class CaptionPositionActivity : Activity() {
             val sample = tx("Çevrilmiş altyazı burada görünür", "Translated subtitle appears here")
             val maxTextWidth = width * .84f
             val measured = text.measureText(sample).coerceAtMost(maxTextWidth)
-            val r = RectF(cx - measured / 2 - 24, cy - text.textSize - 16, cx + measured / 2 + 24, cy + 16)
-            c.drawRoundRect(r, 14f, 14f, box)
+            captionBounds.set(cx - measured / 2 - 24, cy - text.textSize - 16, cx + measured / 2 + 24, cy + 16)
+            c.drawRoundRect(captionBounds, 14f, 14f, box)
             c.drawText(sample, cx, cy, text)
             c.drawText(tx("Sürükleyerek konumlandır • yön tuşlarıyla ince ayar • BACK kaydet", "Drag to position • D-pad for fine adjustment • BACK saves"), 24f, 42f, hint)
         }

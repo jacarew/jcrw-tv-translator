@@ -1,4 +1,4 @@
 <resources>
     <string name="quick_menu_accessibility_label">Jcrw kumanda hızlı menüsü</string>
-    <string name="quick_menu_accessibility_description">Chiaki veya Remote Play sırasında D-pad sağ tuşunu yaklaşık yarım saniye basılı tutunca Jcrw çeviri hızlı menüsünü açar. Tuşlar uygulamalara da iletilir.</string>
+    <string name="quick_menu_accessibility_description">Jcrw içinde atadığınız kumanda tuşuna basınca, Chiaki veya Remote Play üstünde Jcrw çeviri hızlı menüsünü açar.</string>
 </resources>

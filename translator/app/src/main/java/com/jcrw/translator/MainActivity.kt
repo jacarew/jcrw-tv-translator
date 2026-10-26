@@ -2,6 +2,7 @@ package com.jcrw.translator
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -16,6 +17,7 @@ import android.os.Looper
 import android.provider.Settings
 import android.text.InputType
 import android.view.Gravity
+import android.view.KeyEvent
 import android.view.View
 import android.widget.*
 import org.json.JSONObject
@@ -31,6 +33,8 @@ class MainActivity : Activity() {
     private val captureRequest = 42
     private var screenReady = false
     private var pendingQuickStart = false
+    private var capturingShortcutKey = false
+    private var accessibilitySettingsRequestPending = false
     private fun tx(tr:String,en:String)=if(p.uiLanguage=="en")en else tr
     private val mainHandler=Handler(Looper.getMainLooper())
     private val refreshStateRunnable=object:Runnable{override fun run(){refreshMainState();mainHandler.postDelayed(this,1200L)}}
@@ -38,7 +42,7 @@ class MainActivity : Activity() {
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN)
         if(p.hasUiLanguageSelection)continueStartupAfterLanguageChoice() else showLanguageSelection()
     }
-    override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState); p=CompanionPreferences(this);if(!p.performanceProfileApplied){if(p.ocrWidth>=720)p.ocrWidth=320;p.scanIntervalMs=1500;p.performanceProfileApplied=true};pendingQuickStart=intent.getBooleanExtra(EXTRA_QUICK_START,false);showSplash();mainHandler.postDelayed(finishSplash,1800) }
+    override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState); p=CompanionPreferences(this);pendingQuickStart=intent.getBooleanExtra(EXTRA_QUICK_START,false);showSplash();mainHandler.postDelayed(finishSplash,1800) }
     override fun onNewIntent(intent:Intent){super.onNewIntent(intent);setIntent(intent);if(intent.getBooleanExtra(EXTRA_QUICK_START,false)){pendingQuickStart=true;if(screenReady&&p.licenseAccepted){pendingQuickStart=false;mainHandler.postDelayed({beginStart()},250)}}}
     private fun showSplash(){
         window.setFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN,android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN)
@@ -65,7 +69,7 @@ class MainActivity : Activity() {
         val english=p.uiLanguage=="en"
         val title=if(english)"Jcrw Translator — first run" else "Jcrw Çeviri — ilk kullanım"
         val body=if(english) "Jcrw Translator is provided free by its publisher. Use it at your own risk; you are responsible for permissions, device settings, and any effects on your device or accounts.\n\nWhen enabled, screen capture is processed on this device for OCR. Only recognized subtitle text—not screenshots—is sent to the translation or speech provider you select. Review that provider's privacy terms and API charges.\n\nThis application includes modified Chiaki-derived translation and speech code under AGPL-3.0-only-OpenSSL. License notices and corresponding source are provided with the project. The upstream license grants rights that cannot be removed by this notice.\n\nAccept to continue. If you decline or return, the application will close." else "Jcrw Çeviri yayıncısı tarafından ücretsiz sunulur. Kendi sorumluluğunuzda kullanın; izinler, cihaz ayarları ve cihazınızda veya hesaplarınızda oluşabilecek etkilerden siz sorumlusunuz.\n\nEtkinleştirdiğinizde ekran yakalama, OCR için bu cihazda işlenir. Ekran görüntüsü değil, yalnızca tanınan altyazı metni seçtiğiniz çeviri veya ses sağlayıcısına gönderilir. Sağlayıcının gizlilik koşullarını ve olası API ücretlerini kontrol edin.\n\nUygulamada AGPL-3.0-only-OpenSSL lisanslı Chiaki kaynaklı değiştirilmiş çeviri ve ses kodu bulunur. Lisans bildirimleri ve ilgili kaynak proje içinde sağlanır. Üst kaynak lisansının tanıdığı haklar bu bildirimle kaldırılamaz.\n\nDevam etmek için kabul edin. Reddederseniz veya geri çıkarsanız uygulama kapanır."
-        val dialog=AlertDialog.Builder(this).setTitle(title).setMessage(body).setCancelable(true).setPositiveButton(if(english)"Accept" else "Kabul ediyorum"){_,_->p.licenseAccepted=true;if(!pendingQuickStart)mainHandler.postDelayed({checkForUpdates()},500)}.setNegativeButton(if(english)"Decline" else "Kabul etmiyorum"){_,_->finishAndRemoveTask()}.create()
+        val dialog=AlertDialog.Builder(this).setTitle(title).setMessage(body).setCancelable(true).setPositiveButton(if(english)"Accept" else "Kabul ediyorum"){_,_->p.licenseAccepted=true;if(pendingQuickStart){pendingQuickStart=false;mainHandler.postDelayed({beginStart()},250)}else mainHandler.postDelayed({checkForUpdates()},500)}.setNegativeButton(if(english)"Decline" else "Kabul etmiyorum"){_,_->finishAndRemoveTask()}.create()
         dialog.setCanceledOnTouchOutside(false);dialog.setOnCancelListener{finishAndRemoveTask()};dialog.setOnShowListener{dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.requestFocus()};dialog.show()
     }
 
@@ -134,12 +138,13 @@ class MainActivity : Activity() {
         actionButton(page,tx("Ayarlar","Settings"),false){showSettings()}
         row(page,tx("Açık kaynak lisansları","Open-source licenses"),tx("Kullanım ve gizlilik","Usage and privacy"),
             {showLicenses()},{showUsagePrivacy()})
-        supportBanner(page)
+        val showSupport = resources.getBoolean(R.bool.show_support_banner)
+        if(showSupport) supportBanner(page)
         actionButton(page,tx("Simge durumuna küçült","Minimize to background"),false){moveTaskToBack(true)}
         val scroll=ScrollView(this).apply{isFillViewport=true};scroll.addView(page)
         val root=FrameLayout(this).apply {
             addView(scroll,FrameLayout.LayoutParams(-1,-1))
-            addView(ImageView(this@MainActivity).apply {
+            if(showSupport) addView(ImageView(this@MainActivity).apply {
                 setImageResource(R.drawable.bmc_qr);scaleType=ImageView.ScaleType.FIT_CENTER
                 setPadding(dp(4),dp(4),dp(4),dp(4));background=shape(Color.WHITE,Color.rgb(205,215,230))
                 contentDescription=tx("Buy Me a Coffee QR kodu","Buy Me a Coffee QR code")
@@ -241,7 +246,22 @@ class MainActivity : Activity() {
         else if(requestCode==captureRequest){p.captureRunning=false;p.captureStatus=tx("Ekran yakalama izni verilmedi","Screen-capture permission was not granted");refreshMainState()}
     }
     private fun message(text:String){Toast.makeText(this,text,Toast.LENGTH_LONG).show()}
-    override fun onResume(){super.onResume();ShortcutState.blocked=true;mainHandler.removeCallbacks(refreshStateRunnable);mainHandler.post(refreshStateRunnable)}
+    override fun onResume(){
+        super.onResume()
+        ShortcutState.blocked=true
+        mainHandler.removeCallbacks(refreshStateRunnable)
+        mainHandler.post(refreshStateRunnable)
+        if(accessibilitySettingsRequestPending){
+            accessibilitySettingsRequestPending=false
+            mainHandler.postDelayed({
+                if(isQuickMenuAccessibilityEnabled()){
+                    message(tx("Erişilebilirlik etkin. Atadığınız kumanda tuşu hızlı menüyü açacak.","Accessibility is enabled. Your assigned controller key will open the quick menu."))
+                } else {
+                    showAccessibilitySetupInfo(true)
+                }
+            },400L)
+        }
+    }
     override fun onPause(){ShortcutState.blocked=false;mainHandler.removeCallbacks(refreshStateRunnable);super.onPause()}
     @Suppress("DEPRECATION")
     override fun onBackPressed(){moveTaskToBack(true)}
@@ -266,12 +286,14 @@ class MainActivity : Activity() {
         choice(box,tx("Altyazı yazı boyutu","Caption font size"),arrayOf("8 sp • çok küçük","10 sp • küçük","12 sp","14 sp","18 sp","22 sp","26 sp","30 sp","36 sp","42 sp","48 sp"),listOf(8,10,12,14,18,22,26,30,36,42,48).indexOf(p.captionTextSize).coerceAtLeast(0)){p.captionTextSize=listOf(8,10,12,14,18,22,26,30,36,42,48)[it]}
         choice(box,tx("Altyazı yazı rengi","Caption text color"),ColorNames.map{if(p.uiLanguage=="en")it.second else it.first}.toTypedArray(),ColorNames.indexOfFirst{it.third==p.captionTextColor}.coerceAtLeast(0)){p.captionTextColor=ColorNames[it].third}
         choice(box,tx("Altyazı arka plan rengi","Caption background color"),BackgroundNames.map{if(p.uiLanguage=="en")it.second else it.first}.toTypedArray(),BackgroundNames.indexOfFirst{it.third==p.captionBackgroundColor}.coerceAtLeast(0)){p.captionBackgroundColor=BackgroundNames[it].third}
-        choice(box,tx("Altyazı yazı tipi","Caption font"),arrayOf("Sans Serif","Sans Serif Kalın","Serif","Monospace"),listOf("sans-serif","sans-serif-medium","serif","monospace").indexOf(p.captionFont).coerceAtLeast(1)){p.captionFont=listOf("sans-serif","sans-serif-medium","serif","monospace")[it]}
+        val fontValues=listOf("sans-serif","sans-serif-medium","sans-serif-black","sans-serif-condensed","sans-serif-light","sans-serif-rounded","serif","serif-monospace","monospace")
+        val fontNames=if(p.uiLanguage=="en") arrayOf("Sans Serif","Sans Serif Medium","Sans Serif Black","Sans Serif Condensed","Sans Serif Light","Rounded Sans","Serif","Serif Monospace","Monospace") else arrayOf("Sans Serif","Sans Serif Kalın","Sans Serif Siyah","Dar Sans Serif","İnce Sans Serif","Yuvarlak Sans Serif","Serif","Serif Monospace","Monospace")
+        choice(box,tx("Altyazı yazı tipi","Caption font"),fontNames,fontValues.indexOf(p.captionFont).coerceAtLeast(0)){p.captionFont=fontValues[it]}
     }
     private fun showTranslationSettings()=settingsPage(tx("OCR ve çeviri","OCR and translation")){box->
         choice(box,tx("OCR motoru","OCR engine"),arrayOf("ML Kit (cihazda / on-device)","Tesseract (indirilen model / downloaded model)"),if(p.ocrEngine=="tesseract")1 else 0){p.ocrEngine=if(it==1)"tesseract" else "mlkit"}
         choice(box,tx("OCR çözünürlüğü • düşük değer daha az yük","OCR resolution • lower uses less CPU"),arrayOf("96 px","160 px","240 px","320 px","480 px","720 px"),listOf(96,160,240,320,480,720).indexOf(p.ocrWidth).coerceAtLeast(0)){p.ocrWidth=listOf(96,160,240,320,480,720)[it]}
-        choice(box,tx("OCR tarama aralığı","OCR sampling interval"),arrayOf("1 saniye • hızlı","1,5 saniye • dengeli","2 saniye • daha az yük","3 saniye • en az yük"),listOf(1000,1500,2000,3000).indexOf(p.scanIntervalMs).coerceAtLeast(1)){p.scanIntervalMs=listOf(1000,1500,2000,3000)[it]}
+        choice(box,tx("OCR tarama aralığı","OCR sampling interval"),arrayOf("1 saniye • hızlı","1,5 saniye • dengeli","2 saniye • daha az yük","3 saniye • en az yük"),listOf(1000,1500,2000,3000).indexOf(p.scanIntervalMs).coerceAtLeast(0)){p.scanIntervalMs=listOf(1000,1500,2000,3000)[it]}
         choice(box,tx("Çeviri servisi","Translation provider"),arrayOf("DeepL API","OpenAI / GPT","Google Gemini","LibreTranslate"),listOf("deepl","openai","gemini","libretranslate").indexOf(p.translationProvider).coerceAtLeast(0)){p.translationProvider=listOf("deepl","openai","gemini","libretranslate")[it]}
         choice(box,tx("Kaynak dili","Source language"),arrayOf("English","Japanese","Auto"),listOf("en","ja","auto").indexOf(p.subtitleSourceLanguage).coerceAtLeast(0)){p.subtitleSourceLanguage=listOf("en","ja","auto")[it]}
         choice(box,tx("Çeviri hedef dili","Translation target language"),arrayOf("Türkçe","English","Deutsch","Español","Français","日本語"),listOf("tr","en","de","es","fr","ja").indexOf(p.subtitleTargetLanguage).coerceAtLeast(0)){p.subtitleTargetLanguage=listOf("tr","en","de","es","fr","ja")[it]}
@@ -291,9 +313,51 @@ class MainActivity : Activity() {
         val rate=SeekBar(this).apply{max=15;progress=((p.speechRate-.5f)*10).toInt().coerceIn(0,15);setOnSeekBarChangeListener(object:SeekBar.OnSeekBarChangeListener{override fun onProgressChanged(s:SeekBar?,v:Int,u:Boolean){p.speechRate=.5f+v/10f};override fun onStartTrackingTouch(s:SeekBar?){};override fun onStopTrackingTouch(s:SeekBar?) {}})}
         box.addView(TextView(this).apply{text=tx("Ses hızı: ${"%.1f".format(p.speechRate)}x","Speech rate: ${"%.1f".format(p.speechRate)}x");textSize=18f;setTextColor(Color.WHITE)});box.addView(rate)
     }
-    private fun showControllerSettings()=settingsPage(tx("Kumanda kısayolu","Controller shortcut")){box->
-        choice(box,tx("D-pad sağ uzun basma kısayolu", "Hold D-pad right for quick menu"),arrayOf(tx("Kapalı", "Off"),tx("Açık • yaklaşık yarım saniye basılı tut", "On • hold for about half a second")),if(p.quickShortcutEnabled)1 else 0){p.quickShortcutEnabled=it==1}
-        actionButton(box,tx("Erişilebilirlik ayarlarını aç","Open accessibility settings"),false){try{startActivity(Intent(Settings.ACTION_SETTINGS))}catch(_:Exception){message(tx("TV ayarlarını elle açıp Erişilebilirlik bölümüne gidin","Open TV settings and find Accessibility"))}}
+    private fun showControllerSettings():Unit { settingsPage(tx("Kumanda kısayolu","Controller shortcut")){box->
+        val assignedKey=if(p.quickShortcutKeyCode==KeyEvent.KEYCODE_UNKNOWN)tx("Atanmadı","Not assigned") else KeyEvent.keyCodeToString(p.quickShortcutKeyCode)
+        val assignButton=actionButton(box,tx("Kısayol tuşunu ata: $assignedKey","Assign shortcut key: $assignedKey"),false){capturingShortcutKey=true;message(tx("Şimdi kullanmak istediğin boş kumanda tuşuna bas","Now press the unused remote button you want to assign"))}
+        assignButton.setOnKeyListener { _:View,code:Int,event:KeyEvent ->
+            if(!capturingShortcutKey || event.action!=KeyEvent.ACTION_DOWN || event.repeatCount!=0) return@setOnKeyListener capturingShortcutKey
+            if(code in listOf(KeyEvent.KEYCODE_BACK,KeyEvent.KEYCODE_HOME,KeyEvent.KEYCODE_POWER,KeyEvent.KEYCODE_VOLUME_UP,KeyEvent.KEYCODE_VOLUME_DOWN,KeyEvent.KEYCODE_VOLUME_MUTE)){
+                message(tx("Geri, ana ekran, güç ve ses tuşları atanamaz","Back, Home, power, and volume keys cannot be assigned"));return@setOnKeyListener true
+            }
+            p.quickShortcutKeyCode=code;capturingShortcutKey=false
+            settingsDialog?.dismiss();showControllerSettings()
+            message(tx("Kısayol tuşu kaydedildi: ${KeyEvent.keyCodeToString(code)}","Shortcut saved: ${KeyEvent.keyCodeToString(code)}"))
+            true
+        }
+        choice(box,tx("Kumanda kısayolu","Remote shortcut"),arrayOf(tx("Kapalı","Off"),tx("Açık • atanan tuşa basınca hızlı menü açılır","On • press assigned key to open quick menu")),if(p.quickShortcutEnabled)1 else 0){p.quickShortcutEnabled=it==1}
+        actionButton(box,tx("Erişilebilirlik ayarlarını aç","Open Accessibility settings"),false){openAccessibilitySettings()}
+        box.addView(TextView(this).apply{
+            text=tx("Gerekli yol: TV Ayarları → Cihaz Tercihleri (bazı TV'lerde Sistem) → Erişilebilirlik → Jcrw kumanda hızlı menüsü → Açık. Android bu izni uygulamaya kendiliğinden açtırmaz; ekranda anahtarı elle açıp Translator'a geri dönün.","Required path: TV Settings → Device Preferences (System on some TVs) → Accessibility → Jcrw remote quick menu → On. Android does not let apps enable this permission themselves; switch it on manually, then return to Translator.")
+            textSize=15f;setTextColor(Color.LTGRAY);setPadding(dp(6),dp(4),dp(6),dp(10))
+        })
+    } }
+    private fun openAccessibilitySettings(){
+        accessibilitySettingsRequestPending=true
+        try{
+            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        }catch(_:Exception){
+            accessibilitySettingsRequestPending=false
+            showAccessibilitySetupInfo(true)
+        }
+    }
+    private fun isQuickMenuAccessibilityEnabled():Boolean{
+        val service=ComponentName(this,QuickMenuAccessibilityService::class.java)
+        val enabled=Settings.Secure.getString(contentResolver,Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)?:return false
+        return enabled.split(':').any { entry ->
+            ComponentName.unflattenFromString(entry)?.let { it.packageName==service.packageName && it.className==service.className }==true
+        }
+    }
+    private fun showAccessibilitySetupInfo(automaticOpenFailed:Boolean){
+        val heading=if(automaticOpenFailed)tx("Erişilebilirlik ayarı otomatik olarak bulunamadı","Accessibility setting could not be opened automatically") else tx("Erişilebilirlik izni gerekli","Accessibility permission required")
+        val details=tx(
+            "Elle açmanız gerekiyor:\n\nTV Ayarları → Cihaz Tercihleri (bazı TV'lerde Sistem) → Erişilebilirlik → Jcrw kumanda hızlı menüsü → Açık.\n\nİzin açıldıktan sonra Translator'a dönün. Kısayol için ayrıca yukarıdaki ayarlardan bir kumanda tuşu atayın.",
+            "You need to enable it manually:\n\nTV Settings → Device Preferences (System on some TVs) → Accessibility → Jcrw remote quick menu → On.\n\nReturn to Translator after enabling it. Also assign a controller key in the settings above to use the shortcut."
+        )
+        AlertDialog.Builder(this).setTitle(heading).setMessage(details)
+            .setPositiveButton(tx("Ayarları yeniden dene","Try settings again")){_,_->openAccessibilitySettings()}
+            .setNegativeButton(tx("Kapat","Close"),null).show()
     }
     private fun choice(parent:LinearLayout,title:String,items:Array<String>,selected:Int,onSelect:(Int)->Unit){val b=Button(this).apply{text="$title: ${items[selected]}";textSize=16f;isAllCaps=false;typeface=android.graphics.Typeface.create("sans-serif-medium",android.graphics.Typeface.BOLD);setTextColor(Color.WHITE);minHeight=dp(58);background=buttonBackground(false);stateListAnimator=null;setPadding(dp(12),dp(8),dp(12),dp(8));setOnClickListener{AlertDialog.Builder(this@MainActivity).setTitle(title).setSingleChoiceItems(items,selected){d,w->onSelect(w);this.text="$title: ${items[w]}";d.dismiss()}.show()}};parent.addView(b,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(9)})}
     private fun edit(parent:LinearLayout,title:String,value:String,secret:Boolean=false,onSave:(String)->Unit){parent.addView(Button(this).apply{text="$title: "+if(value.isBlank())tx("girilmedi","not set") else if(secret)tx("kayıtlı","saved") else value;textSize=16f;isAllCaps=false;typeface=android.graphics.Typeface.create("sans-serif-medium",android.graphics.Typeface.BOLD);setTextColor(Color.WHITE);minHeight=dp(58);background=buttonBackground(false);stateListAnimator=null;setPadding(dp(12),dp(8),dp(12),dp(8));setOnClickListener{val input=EditText(this@MainActivity).apply{setText(value);inputType=if(secret)InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD else InputType.TYPE_CLASS_TEXT};AlertDialog.Builder(this@MainActivity).setTitle(title).setView(input).setPositiveButton(tx("Kaydet","Save")){_,_->onSave(input.text.toString());this.text="$title: "+if(secret)tx("kayıtlı","saved") else input.text.toString()}.setNegativeButton(tx("İptal","Cancel"),null).show()}},LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(9)})}

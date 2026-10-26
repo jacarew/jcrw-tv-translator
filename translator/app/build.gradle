@@ -6,11 +6,17 @@ android {
     compileSdk 34
     defaultConfig {
         applicationId 'com.jcrw.translator.tv'
-        minSdk 23
+        minSdk 24
         targetSdk 28
-        versionCode 17
-        versionName '1.1.6'
+        versionCode 18
+        versionName '1.1.7'
     }
+    flavorDimensions 'edition'
+    productFlavors {
+        publicRelease { dimension 'edition' }
+        personal { dimension 'edition' }
+    }
+    lint { disable 'ExpiredTargetSdkVersion' }
     splits {
         abi {
             enable true
@@ -32,6 +38,20 @@ android {
             }
         }
         buildTypes { release { signingConfig signingConfigs.publicRelease } }
+    }
+    // A local TV update may reuse the developer's existing debug certificate.
+    // Set JCRW_PERSONAL_DEBUG_KEYSTORE only on the machine that owns that key.
+    def personalDebugStore = System.getenv('JCRW_PERSONAL_DEBUG_KEYSTORE')
+    if (personalDebugStore) {
+        signingConfigs {
+            personalTvDebug {
+                storeFile file(personalDebugStore)
+                storePassword 'android'
+                keyAlias 'androiddebugkey'
+                keyPassword 'android'
+            }
+        }
+        buildTypes { debug { signingConfig signingConfigs.personalTvDebug } }
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
     kotlinOptions { jvmTarget = '1.8' }

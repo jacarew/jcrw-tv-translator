@@ -1,10 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-feature android:name="android.software.leanback" android:required="false" />
-    <application android:theme="@style/AppTheme" android:label="Jcrw Çeviri" android:icon="@drawable/app_logo" android:roundIcon="@drawable/app_logo" android:usesCleartextTraffic="false" android:allowBackup="false">
+    <application android:theme="@style/AppTheme" android:label="Jcrw Çeviri" android:icon="@drawable/app_logo" android:roundIcon="@drawable/app_logo" android:banner="@drawable/tv_banner" android:usesCleartextTraffic="false" android:allowBackup="false">
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -31,6 +31,7 @@ class CompanionPreferences(context: Context) {
     var captionBackgroundColor: Int get() = prefs.getInt("caption_background_color", 0xD9000000.toInt()); set(v) = prefs.edit().putInt("caption_background_color",v).apply()
     var captionFont: String get() = prefs.getString("caption_font", "sans-serif-medium") ?: "sans-serif-medium"; set(v) = prefs.edit().putString("caption_font",v).apply()
     var quickShortcutEnabled: Boolean get() = prefs.getBoolean("quick_shortcut_enabled", true); set(v) = prefs.edit().putBoolean("quick_shortcut_enabled",v).apply()
+    var quickShortcutKeyCode: Int get() = prefs.getInt("quick_shortcut_key_code", android.view.KeyEvent.KEYCODE_UNKNOWN); set(v) = prefs.edit().putInt("quick_shortcut_key_code",v).apply()
     var speechEnabled: Boolean get() = prefs.getBoolean("speech_enabled", false); set(v) = prefs.edit().putBoolean("speech_enabled",v).apply()
     var speechProvider: String get() = prefs.getString("speech_provider", "android") ?: "android"; set(v) = prefs.edit().putString("speech_provider",v).apply()
     var speechGender: String get() = prefs.getString("speech_gender", "female") ?: "female"; set(v) = prefs.edit().putString("speech_gender",v).apply()
